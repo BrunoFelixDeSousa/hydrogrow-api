@@ -1,3 +1,4 @@
+// Para visualização desse esquema, acesse https://dbdiagram.io/ e importe esse arquivo(schema.dbml).
 Project hidroponic_api {
   database_type: 'PostgreSQL'
   Note: 'Modelo alvo: sessões revogáveis, vínculos explícitos e integridade por tenant. JWT usa sid; não é armazenado no banco.'
