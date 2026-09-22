@@ -5,17 +5,18 @@ Project hidroponic_api {
 }
 
 Table users {
-  Note: 'Identidade global e credenciais. Sem refresh ou reset nesta tabela; perfil, vínculos e sessões são entidades próprias.'
+  Note: 'Identidade global e credenciais. status preserva o ciclo de vida completo. Sem refresh ou reset nesta tabela; perfil, vínculos e sessões são entidades próprias.'
   id uuid [pk, default: `gen_random_uuid()`]
   email text [not null]
   password_hash text [not null]
-  is_active boolean [not null, default: true]
+  status text [not null, default: 'PENDING']
   email_verified boolean [not null, default: false]
   last_login_at timestamptz
   created_at timestamptz [not null, default: `now()`]
   updated_at timestamptz [not null, default: `now()`]
   checks {
     `email = lower(btrim(email)) AND length(email) BETWEEN 3 AND 255` [name: 'ck_users_email_normalized']
+    `status IN ('PENDING', 'ACTIVE', 'BLOCKED', 'DISABLED')` [name: 'ck_users_status']
   }
   indexes {
     email [unique, name: 'uq_users_email']

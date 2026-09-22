@@ -4,18 +4,20 @@
 -- Refresh: opaco, SHA-256 em refresh_tokens; replay revoga a sessão, inclusive acesso via sid.
 BEGIN;
 
--- Identidade global e credenciais. Sem refresh ou reset nesta tabela; perfil, vínculos e sessões são entidades próprias.
+-- Identidade global e credenciais. status preserva o ciclo de vida completo.
+-- Sem refresh ou reset nesta tabela; perfil, vínculos e sessões são entidades próprias.
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email TEXT NOT NULL,
     password_hash TEXT NOT NULL,
-    is_active BOOLEAN NOT NULL DEFAULT true,
+    status TEXT NOT NULL DEFAULT 'PENDING',
     email_verified BOOLEAN NOT NULL DEFAULT false,
     last_login_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT uq_users_email UNIQUE (email),
-    CONSTRAINT ck_users_email_normalized CHECK (email = lower(btrim(email)) AND length(email) BETWEEN 3 AND 255)
+    CONSTRAINT ck_users_email_normalized CHECK (email = lower(btrim(email)) AND length(email) BETWEEN 3 AND 255),
+    CONSTRAINT ck_users_status CHECK (status IN ('PENDING', 'ACTIVE', 'BLOCKED', 'DISABLED'))
 );
 
 -- Um perfil global por usuário. O tenant apresentado no DTO vem da sessão autorizada, não desta tabela.
