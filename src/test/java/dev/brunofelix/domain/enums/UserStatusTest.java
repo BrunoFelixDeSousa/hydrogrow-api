@@ -8,7 +8,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 @DisplayName("UserStatus")
-class UserStatus {
+class UserStatusTest {
 
     @Nested
     @DisplayName("When checking authentication")
