@@ -7,9 +7,9 @@ import dev.brunofelix.domain.exception.EmailNotVerifiedException;
 import dev.brunofelix.domain.exception.UserAlreadyActiveException;
 import dev.brunofelix.domain.exception.UserBlockedException;
 import dev.brunofelix.domain.exception.UserInactiveException;
-import dev.brunofelix.domain.vo.Email;
-import dev.brunofelix.domain.vo.Password;
-import dev.brunofelix.domain.vo.UserId;
+import dev.brunofelix.domain.valueobject.Email;
+import dev.brunofelix.domain.valueobject.Password;
+import dev.brunofelix.domain.valueobject.UserId;
 
 import java.time.Instant;
 import java.util.Objects;
