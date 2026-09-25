@@ -81,8 +81,8 @@ public class User {
             UserStatus.PENDING,
             EmailVerificationStatus.PENDING,
             lastLoginAt,
-            now,
-            now
+            createdAt,
+            updatedAt
         );
     }
 
