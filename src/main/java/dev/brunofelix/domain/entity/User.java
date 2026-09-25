@@ -102,7 +102,7 @@ public class User {
             throw new UserAlreadyActiveException();
         }
 
-        if (!emailVerificationStatus.isVerified) {
+        if (!emailVerificationStatus.isVerified()) {
             throw new EmailNotVerifiedException();
         }
 
