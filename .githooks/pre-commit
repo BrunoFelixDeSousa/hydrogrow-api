@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+
+set -e
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Executando pre-commit"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+echo "Executando testes unitários..."
+./mvnw -q test
+
+echo "✅ Pre-commit concluído."

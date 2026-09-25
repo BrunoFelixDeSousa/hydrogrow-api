@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+
+set -e
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Executando pre-push"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+./mvnw -q verify
+
+echo "✅ Verificações concluídas com sucesso"
