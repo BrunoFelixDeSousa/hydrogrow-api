@@ -28,6 +28,7 @@ Centralizar e padronizar as regras de negócio da plataforma HydroGrow, incluind
 - [README principal](../README.md) — instruções gerais de execução e configuração do projeto.
 - [Arquitetura do banco](architecture/schema.db.sql) — modelo de dados em SQL.
 - [Diagrama do banco](architecture/schema.dbml) — visão visual do schema.
+- [Git Hooks](./git-hooks.md) Validações antes do commit e push
 
 ## Como executar
 
