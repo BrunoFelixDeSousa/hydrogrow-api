@@ -5,9 +5,8 @@
 BEGIN;
 
 -- Identidade global e credenciais. status preserva o ciclo de vida completo.
--- Sem refresh ou reset nesta tabela; perfil, vínculos e sessões são entidades próprias.
 CREATE TABLE users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     email TEXT NOT NULL,
     password_hash TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'PENDING',
@@ -22,7 +21,7 @@ CREATE TABLE users (
 
 -- Um perfil global por usuário. O tenant apresentado no DTO vem da sessão autorizada, não desta tabela.
 CREATE TABLE profiles (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     user_id UUID NOT NULL,
     full_name TEXT NOT NULL,
     avatar_url TEXT,
@@ -49,7 +48,7 @@ CREATE TABLE plans (
 
 -- Empresa. plan e subscription_active são a projeção de acesso comercial mantida pelo caso de uso de billing.
 CREATE TABLE tenants (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     name TEXT NOT NULL,
     document TEXT,
     email TEXT,
@@ -69,7 +68,7 @@ CREATE TABLE tenants (
 
 -- Vínculo explícito usuário/empresa. Desativar em vez de excluir para preservar autoria e sessões históricas.
 CREATE TABLE tenant_memberships (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     tenant_id UUID NOT NULL,
     user_id UUID NOT NULL,
     is_active BOOLEAN NOT NULL DEFAULT true,
@@ -89,7 +88,7 @@ CREATE TABLE membership_roles (
 
 -- Privilégio administrativo global; não elimina os filtros de tenant nas rotas operacionais.
 CREATE TABLE super_admins (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     user_id UUID NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT uq_super_admins_user_id UNIQUE (user_id)
@@ -97,7 +96,7 @@ CREATE TABLE super_admins (
 
 -- Uma sessão por login/contexto/dispositivo. sid do JWT referencia id. Revogação é consultada em toda requisição. Expiração absoluta: 30 dias.
 CREATE TABLE auth_sessions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     user_id UUID NOT NULL,
     tenant_id UUID,
     scope TEXT NOT NULL DEFAULT 'tenant',
@@ -116,7 +115,7 @@ CREATE TABLE auth_sessions (
 
 -- Uma linha por emissão; SHA-256 hexadecimal de token opaco com 32 bytes aleatórios. Histórico preserva a família (session_id). SQL inclui índices parciais para um token aberto e uma raiz por sessão.
 CREATE TABLE refresh_tokens (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     session_id UUID NOT NULL,
     token_hash TEXT NOT NULL,
     parent_token_id UUID,
@@ -135,7 +134,7 @@ CREATE TABLE refresh_tokens (
 
 -- Token opaco de uso único, SHA-256, validade de uma hora. SQL limita a um token aberto por usuário; novo pedido revoga os anteriores.
 CREATE TABLE password_reset_tokens (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     user_id UUID NOT NULL,
     token_hash TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -150,7 +149,7 @@ CREATE TABLE password_reset_tokens (
 
 -- Categorias próprias de cada empresa.
 CREATE TABLE product_categories (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     tenant_id UUID NOT NULL,
     name TEXT NOT NULL,
     description TEXT,
@@ -163,7 +162,7 @@ CREATE TABLE product_categories (
 
 -- Catálogo. Lote, validade e saldo pertencem a inventory_lots; currentStock no DTO é SUM(current_stock) dos lotes. Unidade não muda após movimentação.
 CREATE TABLE products (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     tenant_id UUID NOT NULL,
     category_id UUID,
     name TEXT NOT NULL,
@@ -185,7 +184,7 @@ CREATE TABLE products (
 
 -- Parceiro por tenant. Documento opcional normalizado sem pontuação; vazio vira NULL. FKs impedem excluir parceiros utilizados.
 CREATE TABLE customers (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     tenant_id UUID NOT NULL,
     name TEXT NOT NULL,
     document TEXT,
@@ -206,7 +205,7 @@ CREATE TABLE customers (
 
 -- Parceiro por tenant. Documento opcional normalizado sem pontuação; vazio vira NULL. FKs impedem excluir parceiros utilizados.
 CREATE TABLE suppliers (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     tenant_id UUID NOT NULL,
     name TEXT NOT NULL,
     document TEXT,
@@ -227,7 +226,7 @@ CREATE TABLE suppliers (
 
 -- Venda: open, completed, cancelled. Total recalculado no servidor. Conclusão, estoque e financeiro na mesma transação.
 CREATE TABLE sales (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     tenant_id UUID NOT NULL,
     customer_id UUID,
     user_id UUID NOT NULL,
@@ -247,7 +246,7 @@ CREATE TABLE sales (
 
 -- Preço, unidade e nome são snapshots comerciais. Um produto por documento; alocações de vários lotes são representadas nos movimentos.
 CREATE TABLE sale_items (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     tenant_id UUID NOT NULL,
     sale_id UUID NOT NULL,
     product_id UUID NOT NULL,
@@ -267,7 +266,7 @@ CREATE TABLE sale_items (
 
 -- Compra: open, received, cancelled. Recebimento, estoque e financeiro na mesma transação.
 CREATE TABLE purchases (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     tenant_id UUID NOT NULL,
     supplier_id UUID,
     user_id UUID NOT NULL,
@@ -285,7 +284,7 @@ CREATE TABLE purchases (
 
 -- Preço, unidade e nome são snapshots comerciais. Um produto por documento; alocações de vários lotes são representadas nos movimentos.
 CREATE TABLE purchase_items (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     tenant_id UUID NOT NULL,
     purchase_id UUID NOT NULL,
     product_id UUID NOT NULL,
@@ -305,7 +304,7 @@ CREATE TABLE purchase_items (
 
 -- Modelo agronômico. O produto e a unidade são copiados para o lote de produção no plantio.
 CREATE TABLE crops (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     tenant_id UUID NOT NULL,
     name TEXT NOT NULL,
     variety TEXT,
@@ -324,7 +323,7 @@ CREATE TABLE crops (
 
 -- Ciclo de plantio. Produto e unidade de saída são snapshots. Uma colheita final no escopo atual; perdas não são status separado. Custos gerenciais não geram despesa duplicada de compras.
 CREATE TABLE production_batches (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     tenant_id UUID NOT NULL,
     crop_id UUID NOT NULL,
     product_id UUID NOT NULL,
@@ -359,7 +358,7 @@ CREATE TABLE production_batches (
 
 -- Lote físico de estoque por produto, inclusive um lote interno para itens sem lote comercial. Saldo materializado inicia zero e é atualizado junto com o movimento. Validade opcional.
 CREATE TABLE inventory_lots (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     tenant_id UUID NOT NULL,
     product_id UUID NOT NULL,
     lot_code TEXT NOT NULL,
@@ -379,7 +378,7 @@ CREATE TABLE inventory_lots (
 
 -- Razão imutável de estoque. Delta assinado; estorno por novo registro ligado ao original. Origem tipada com FK. operation_key estável por comando/item/lote garante idempotência.
 CREATE TABLE stock_movements (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     tenant_id UUID NOT NULL,
     product_id UUID NOT NULL,
     lot_id UUID NOT NULL,
@@ -408,7 +407,7 @@ CREATE TABLE stock_movements (
 
 -- Contas a receber/pagar, não contabilidade de partidas dobradas. Uma conta por venda/compra no MVP. overdue é derivado de pending e due_date; pagamento integral.
 CREATE TABLE financial_transactions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     tenant_id UUID NOT NULL,
     type TEXT NOT NULL,
     description TEXT NOT NULL,
@@ -434,7 +433,7 @@ CREATE TABLE financial_transactions (
 
 -- Leituras vinculadas ao lote e tenant. Limites físicos aceitos pelo domínio, não faixa agronômica ideal.
 CREATE TABLE technical_readings (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     tenant_id UUID NOT NULL,
     batch_id UUID NOT NULL,
     ph NUMERIC(4,2),

@@ -1,12 +1,12 @@
 // Para visualização desse esquema, acesse https://dbdiagram.io/ e importe esse arquivo(schema.dbml).
 Project hidroponic_api {
   database_type: 'PostgreSQL'
-  Note: 'Modelo alvo: sessões revogáveis, vínculos explícitos e integridade por tenant. JWT usa sid; não é armazenado no banco.'
+  Note: 'Modelo alvo PostgreSQL 18: UUID v7 para novos IDs, sessões revogáveis, vínculos explícitos e integridade por tenant. JWT usa sid; não é armazenado no banco.'
 }
 
 Table users {
   Note: 'Identidade global e credenciais. status preserva o ciclo de vida completo. Sem refresh ou reset nesta tabela; perfil, vínculos e sessões são entidades próprias.'
-  id uuid [pk, default: `gen_random_uuid()`]
+  id uuid [pk, default: `uuidv7()`]
   email text [not null]
   password_hash text [not null]
   status text [not null, default: 'PENDING']
@@ -25,7 +25,7 @@ Table users {
 
 Table profiles {
   Note: 'Um perfil global por usuário. O tenant apresentado no DTO vem da sessão autorizada, não desta tabela.'
-  id uuid [pk, default: `gen_random_uuid()`]
+  id uuid [pk, default: `uuidv7()`]
   user_id uuid [not null]
   full_name text [not null]
   avatar_url text
@@ -58,7 +58,7 @@ Table plans {
 
 Table tenants {
   Note: 'Empresa. plan e subscription_active são a projeção de acesso comercial mantida pelo caso de uso de billing.'
-  id uuid [pk, default: `gen_random_uuid()`]
+  id uuid [pk, default: `uuidv7()`]
   name text [not null]
   document text
   email text
@@ -83,7 +83,7 @@ Table tenants {
 
 Table tenant_memberships {
   Note: 'Vínculo explícito usuário/empresa. Desativar em vez de excluir para preservar autoria e sessões históricas.'
-  id uuid [pk, default: `gen_random_uuid()`]
+  id uuid [pk, default: `uuidv7()`]
   tenant_id uuid [not null]
   user_id uuid [not null]
   is_active boolean [not null, default: true]
@@ -110,7 +110,7 @@ Table membership_roles {
 
 Table super_admins {
   Note: 'Privilégio administrativo global; não elimina os filtros de tenant nas rotas operacionais.'
-  id uuid [pk, default: `gen_random_uuid()`]
+  id uuid [pk, default: `uuidv7()`]
   user_id uuid [not null]
   created_at timestamptz [not null, default: `now()`]
   indexes {
@@ -120,7 +120,7 @@ Table super_admins {
 
 Table auth_sessions {
   Note: 'Uma sessão por login/contexto/dispositivo. sid do JWT referencia id. Revogação é consultada em toda requisição. Expiração absoluta: 30 dias.'
-  id uuid [pk, default: `gen_random_uuid()`]
+  id uuid [pk, default: `uuidv7()`]
   user_id uuid [not null]
   tenant_id uuid
   scope text [not null, default: 'tenant']
@@ -146,7 +146,7 @@ Table auth_sessions {
 
 Table refresh_tokens {
   Note: 'Uma linha por emissão; SHA-256 hexadecimal de token opaco com 32 bytes aleatórios. Histórico preserva a família (session_id). SQL inclui índices parciais para um token aberto e uma raiz por sessão.'
-  id uuid [pk, default: `gen_random_uuid()`]
+  id uuid [pk, default: `uuidv7()`]
   session_id uuid [not null]
   token_hash text [not null]
   parent_token_id uuid
@@ -170,7 +170,7 @@ Table refresh_tokens {
 
 Table password_reset_tokens {
   Note: 'Token opaco de uso único, SHA-256, validade de uma hora. SQL limita a um token aberto por usuário; novo pedido revoga os anteriores.'
-  id uuid [pk, default: `gen_random_uuid()`]
+  id uuid [pk, default: `uuidv7()`]
   user_id uuid [not null]
   token_hash text [not null]
   created_at timestamptz [not null, default: `now()`]
@@ -191,7 +191,7 @@ Table password_reset_tokens {
 
 Table product_categories {
   Note: 'Categorias próprias de cada empresa.'
-  id uuid [pk, default: `gen_random_uuid()`]
+  id uuid [pk, default: `uuidv7()`]
   tenant_id uuid [not null]
   name text [not null]
   description text
@@ -208,7 +208,7 @@ Table product_categories {
 
 Table products {
   Note: 'Catálogo. Lote, validade e saldo pertencem a inventory_lots; currentStock no DTO é SUM(current_stock) dos lotes. Unidade não muda após movimentação.'
-  id uuid [pk, default: `gen_random_uuid()`]
+  id uuid [pk, default: `uuidv7()`]
   tenant_id uuid [not null]
   category_id uuid
   name text [not null]
@@ -236,7 +236,7 @@ Table products {
 
 Table customers {
   Note: 'Parceiro por tenant. Documento opcional normalizado sem pontuação; vazio vira NULL. FKs impedem excluir parceiros utilizados.'
-  id uuid [pk, default: `gen_random_uuid()`]
+  id uuid [pk, default: `uuidv7()`]
   tenant_id uuid [not null]
   name text [not null]
   document text
@@ -262,7 +262,7 @@ Table customers {
 
 Table suppliers {
   Note: 'Parceiro por tenant. Documento opcional normalizado sem pontuação; vazio vira NULL. FKs impedem excluir parceiros utilizados.'
-  id uuid [pk, default: `gen_random_uuid()`]
+  id uuid [pk, default: `uuidv7()`]
   tenant_id uuid [not null]
   name text [not null]
   document text
@@ -288,7 +288,7 @@ Table suppliers {
 
 Table sales {
   Note: 'Venda: open, completed, cancelled. Total recalculado no servidor. Conclusão, estoque e financeiro na mesma transação.'
-  id uuid [pk, default: `gen_random_uuid()`]
+  id uuid [pk, default: `uuidv7()`]
   tenant_id uuid [not null]
   customer_id uuid
   user_id uuid [not null]
@@ -315,7 +315,7 @@ Table sales {
 
 Table sale_items {
   Note: 'Preço, unidade e nome são snapshots comerciais. Um produto por documento; alocações de vários lotes são representadas nos movimentos.'
-  id uuid [pk, default: `gen_random_uuid()`]
+  id uuid [pk, default: `uuidv7()`]
   tenant_id uuid [not null]
   sale_id uuid [not null]
   product_id uuid [not null]
@@ -340,7 +340,7 @@ Table sale_items {
 
 Table purchases {
   Note: 'Compra: open, received, cancelled. Recebimento, estoque e financeiro na mesma transação.'
-  id uuid [pk, default: `gen_random_uuid()`]
+  id uuid [pk, default: `uuidv7()`]
   tenant_id uuid [not null]
   supplier_id uuid
   user_id uuid [not null]
@@ -365,7 +365,7 @@ Table purchases {
 
 Table purchase_items {
   Note: 'Preço, unidade e nome são snapshots comerciais. Um produto por documento; alocações de vários lotes são representadas nos movimentos.'
-  id uuid [pk, default: `gen_random_uuid()`]
+  id uuid [pk, default: `uuidv7()`]
   tenant_id uuid [not null]
   purchase_id uuid [not null]
   product_id uuid [not null]
@@ -390,7 +390,7 @@ Table purchase_items {
 
 Table crops {
   Note: 'Modelo agronômico. O produto e a unidade são copiados para o lote de produção no plantio.'
-  id uuid [pk, default: `gen_random_uuid()`]
+  id uuid [pk, default: `uuidv7()`]
   tenant_id uuid [not null]
   name text [not null]
   variety text
@@ -414,7 +414,7 @@ Table crops {
 
 Table production_batches {
   Note: 'Ciclo de plantio. Produto e unidade de saída são snapshots. Uma colheita final no escopo atual; perdas não são status separado. Custos gerenciais não geram despesa duplicada de compras.'
-  id uuid [pk, default: `gen_random_uuid()`]
+  id uuid [pk, default: `uuidv7()`]
   tenant_id uuid [not null]
   crop_id uuid [not null]
   product_id uuid [not null]
@@ -456,7 +456,7 @@ Table production_batches {
 
 Table inventory_lots {
   Note: 'Lote físico de estoque por produto, inclusive um lote interno para itens sem lote comercial. Saldo materializado inicia zero e é atualizado junto com o movimento. Validade opcional.'
-  id uuid [pk, default: `gen_random_uuid()`]
+  id uuid [pk, default: `uuidv7()`]
   tenant_id uuid [not null]
   product_id uuid [not null]
   lot_code text [not null]
@@ -481,7 +481,7 @@ Table inventory_lots {
 
 Table stock_movements {
   Note: 'Razão imutável de estoque. Delta assinado; estorno por novo registro ligado ao original. Origem tipada com FK. operation_key estável por comando/item/lote garante idempotência.'
-  id uuid [pk, default: `gen_random_uuid()`]
+  id uuid [pk, default: `uuidv7()`]
   tenant_id uuid [not null]
   product_id uuid [not null]
   lot_id uuid [not null]
@@ -520,7 +520,7 @@ Table stock_movements {
 
 Table financial_transactions {
   Note: 'Contas a receber/pagar, não contabilidade de partidas dobradas. Uma conta por venda/compra no MVP. overdue é derivado de pending e due_date; pagamento integral.'
-  id uuid [pk, default: `gen_random_uuid()`]
+  id uuid [pk, default: `uuidv7()`]
   tenant_id uuid [not null]
   type text [not null]
   description text [not null]
@@ -551,7 +551,7 @@ Table financial_transactions {
 
 Table technical_readings {
   Note: 'Leituras vinculadas ao lote e tenant. Limites físicos aceitos pelo domínio, não faixa agronômica ideal.'
-  id uuid [pk, default: `gen_random_uuid()`]
+  id uuid [pk, default: `uuidv7()`]
   tenant_id uuid [not null]
   batch_id uuid [not null]
   ph numeric(4,2)
@@ -572,14 +572,14 @@ Table technical_readings {
   }
 }
 
-Ref fk_profiles_1: profiles.user_id > users.id [delete: restrict]
+Ref fk_profiles_1: profiles.user_id - users.id [delete: restrict]
 Ref fk_tenants_1: tenants.plan > plans.id [delete: restrict]
 Ref fk_tenant_memberships_1: tenant_memberships.tenant_id > tenants.id [delete: restrict]
 Ref fk_tenant_memberships_2: tenant_memberships.user_id > users.id [delete: restrict]
 Ref fk_membership_roles_1: membership_roles.membership_id > tenant_memberships.id [delete: restrict]
-Ref fk_super_admins_1: super_admins.user_id > users.id [delete: restrict]
+Ref fk_super_admins_1: super_admins.user_id - users.id [delete: restrict]
 Ref fk_auth_sessions_1: auth_sessions.user_id > users.id [delete: restrict]
-Ref fk_auth_sessions_2: auth_sessions.tenant_id > tenants.id [delete: restrict]
+Ref fk_auth_sessions_2: auth_sessions.tenant_id >? tenants.id [delete: restrict]
 Ref fk_auth_sessions_3: auth_sessions.(tenant_id, user_id) > tenant_memberships.(tenant_id, user_id) [delete: restrict]
 Ref fk_refresh_tokens_1: refresh_tokens.session_id > auth_sessions.id [delete: restrict]
 Ref fk_refresh_tokens_2: refresh_tokens.(session_id, parent_token_id) > refresh_tokens.(session_id, id) [delete: restrict]
@@ -617,8 +617,8 @@ Ref fk_stock_movements_5: stock_movements.(tenant_id, production_batch_id, produ
 Ref fk_stock_movements_6: stock_movements.(tenant_id, reversal_of_id, lot_id, product_id) > stock_movements.(tenant_id, id, lot_id, product_id) [delete: restrict]
 Ref fk_stock_movements_7: stock_movements.(tenant_id, user_id) > tenant_memberships.(tenant_id, user_id) [delete: restrict]
 Ref fk_financial_transactions_1: financial_transactions.tenant_id > tenants.id [delete: restrict]
-Ref fk_financial_transactions_2: financial_transactions.(tenant_id, sale_id) > sales.(tenant_id, id) [delete: restrict]
-Ref fk_financial_transactions_3: financial_transactions.(tenant_id, purchase_id) > purchases.(tenant_id, id) [delete: restrict]
+Ref fk_financial_transactions_2: financial_transactions.(tenant_id, sale_id) - sales.(tenant_id, id) [delete: restrict]
+Ref fk_financial_transactions_3: financial_transactions.(tenant_id, purchase_id) - purchases.(tenant_id, id) [delete: restrict]
 Ref fk_technical_readings_1: technical_readings.tenant_id > tenants.id [delete: restrict]
 Ref fk_technical_readings_2: technical_readings.(tenant_id, batch_id) > production_batches.(tenant_id, id) [delete: restrict]
 Ref fk_technical_readings_3: technical_readings.(tenant_id, recorded_by) > tenant_memberships.(tenant_id, user_id) [delete: restrict]
