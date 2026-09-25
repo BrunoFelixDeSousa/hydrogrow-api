@@ -78,8 +78,8 @@ public class User {
             id,
             email,
             password,
-            UserStatus.PENDING,
-            EmailVerificationStatus.PENDING,
+            status,
+            verificationStatus,
             lastLoginAt,
             createdAt,
             updatedAt

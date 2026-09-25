@@ -48,7 +48,6 @@ class UserIdTest {
         @DisplayName("Should create a UserId from a valid UUID string")
         void shouldCreateUserIdFromValidUUIDString() {
             // Given
-            // String idString = UUID.randomUUID().toString();
             String value = "550e8400-e29b-41d4-a716-446655440000";
 
             // When
@@ -59,7 +58,7 @@ class UserIdTest {
         }
 
         @Test
-        @DisplayName("should reject invalid uuid string")
+        @DisplayName("should reject invalid UUID string")
         void shouldRejectInvalidUUIDString() {
             // Given
             String invalidIdString = "invalid-uuid";
