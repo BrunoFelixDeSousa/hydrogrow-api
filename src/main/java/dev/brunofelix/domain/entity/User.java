@@ -31,6 +31,7 @@ public class User {
             final Password password,
             final UserStatus status,
             final EmailVerificationStatus emailVerificationStatus,
+            final Instant lastLoginAt,
             final Instant createdAt,
             final Instant updatedAt
     ) {
