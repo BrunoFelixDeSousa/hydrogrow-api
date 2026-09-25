@@ -91,7 +91,7 @@ public class User {
             throw new EmailAlreadyVerifiedException();
         }
 
-        emailVerificationStatus = EmailVerificationStatus.ACTIVE;
+        emailVerificationStatus = EmailVerificationStatus.VERIFIED;
         status = UserStatus.ACTIVE;
 
         touch();
