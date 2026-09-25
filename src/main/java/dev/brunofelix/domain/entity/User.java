@@ -46,43 +46,43 @@ public class User {
     }
 
     public static User create(
-            final UserId id, 
-            final Email email, 
+            final UserId id,
+            final Email email,
             final Password password
     ) {
         Instant now = Instant.now();
 
         return new User(
-            id,
-            email,
-            password,
-            UserStatus.PENDING,
-            EmailVerificationStatus.PENDING,
-            null,
-            now,
-            now
+                id,
+                email,
+                password,
+                UserStatus.PENDING,
+                EmailVerificationStatus.PENDING,
+                null,
+                now,
+                now
         );
     }
 
     public static User reconstitute(
-            final UserId id, 
-            final Email email, 
+            final UserId id,
+            final Email email,
             final Password password,
-            final UserStatus status, 
+            final UserStatus status,
             final EmailVerificationStatus verificationStatus,
-            final Instant lastLoginAt, 
-            final Instant createdAt, 
-            final Instant updatedAt 
+            final Instant lastLoginAt,
+            final Instant createdAt,
+            final Instant updatedAt
     ) {
         return new User(
-            id,
-            email,
-            password,
-            status,
-            verificationStatus,
-            lastLoginAt,
-            createdAt,
-            updatedAt
+                id,
+                email,
+                password,
+                status,
+                verificationStatus,
+                lastLoginAt,
+                createdAt,
+                updatedAt
         );
     }
 
