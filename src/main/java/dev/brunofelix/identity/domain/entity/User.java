@@ -7,9 +7,7 @@ import dev.brunofelix.identity.domain.exception.EmailNotVerifiedException;
 import dev.brunofelix.identity.domain.exception.UserAlreadyActiveException;
 import dev.brunofelix.identity.domain.exception.UserBlockedException;
 import dev.brunofelix.identity.domain.exception.UserInactiveException;
-import dev.brunofelix.identity.domain.valueobject.Email;
-import dev.brunofelix.identity.domain.valueobject.Password;
-import dev.brunofelix.identity.domain.valueobject.UserId;
+import dev.brunofelix.identity.domain.valueobject.*;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -28,21 +26,19 @@ public class User {
     private User(
             final UserId id,
             final Email email,
-            final Password password,
-            final UserStatus status,
-            final EmailVerificationStatus emailVerificationStatus,
-            final Instant lastLoginAt,
-            final Instant createdAt,
-            final Instant updatedAt
-    ) {
+            Password password,
+            final UserAccountStat state,
+            final UserTimestamps userTimestamps
+            ) {
         this.id = Objects.requireNonNull(id, "O identificador não pode ser nulo");
         this.email = Objects.requireNonNull(email, "O e-mail não pode ser nulo");
         this.password = Objects.requireNonNull(password, "A senha não pode ser nula");
-        this.status = Objects.requireNonNull(status, "O status do usuário não pode ser nulo");
-        this.emailVerificationStatus = Objects.requireNonNull(emailVerificationStatus, "O status de verificação do e-mail não pode ser nulo");
-        this.lastLoginAt = lastLoginAt;
-        this.createdAt = Objects.requireNonNull(createdAt, "A data de criação não pode ser nula");
-        this.updatedAt = Objects.requireNonNull(updatedAt, "A data de atualização não pode ser nula");
+        this.status = Objects.requireNonNull(state.status(), "O status da conta não pode ser nulo");
+        this.emailVerificationStatus = Objects.requireNonNull(state.emailVerificationStatus(), "O estado de verificação do e-mail não pode ser nulo");
+
+        this.lastLoginAt = userTimestamps.lastLoginAt();
+        this.createdAt = Objects.requireNonNull(userTimestamps.createdAt(), "A data de criação não pode ser nula");
+        this.updatedAt = Objects.requireNonNull(userTimestamps.updatedAt(), "A data de atualização não pode ser nula");
     }
 
     public static User create(
@@ -50,17 +46,12 @@ public class User {
             final Email email,
             final Password password
     ) {
-        Instant now = Instant.now();
-
         return new User(
                 id,
                 email,
                 password,
-                UserStatus.PENDING,
-                EmailVerificationStatus.PENDING,
-                null,
-                now,
-                now
+                UserAccountStat.pending(),
+                UserTimestamps.startingAt(Instant.now())
         );
     }
 
@@ -68,21 +59,15 @@ public class User {
             final UserId id,
             final Email email,
             final Password password,
-            final UserStatus status,
-            final EmailVerificationStatus verificationStatus,
-            final Instant lastLoginAt,
-            final Instant createdAt,
-            final Instant updatedAt
+            final UserAccountStat state,
+            final UserTimestamps userTimestamps
     ) {
         return new User(
                 id,
                 email,
                 password,
-                status,
-                verificationStatus,
-                lastLoginAt,
-                createdAt,
-                updatedAt
+                state,
+                userTimestamps
         );
     }
 
@@ -186,7 +171,6 @@ public class User {
     public EmailVerificationStatus emailVerificationStatus() {
         return emailVerificationStatus;
     }
-
 
     public Instant lastLoginAt() {
         return lastLoginAt;

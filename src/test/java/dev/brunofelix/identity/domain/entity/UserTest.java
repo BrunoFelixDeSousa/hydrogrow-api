@@ -6,9 +6,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import dev.brunofelix.identity.domain.enums.EmailVerificationStatus;
 import dev.brunofelix.identity.domain.enums.UserStatus;
 import dev.brunofelix.identity.domain.exception.EmailAlreadyVerifiedException;
-import dev.brunofelix.identity.domain.valueobject.Email;
-import dev.brunofelix.identity.domain.valueobject.Password;
-import dev.brunofelix.identity.domain.valueobject.UserId;
+import dev.brunofelix.identity.domain.valueobject.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -67,9 +65,11 @@ class UserTest {
             var id = UserId.of("123e4567-e89b-12d3-a456-426614174000");
             var email = Email.of("user@example.com");
             var password = Password.of("password");
+            var state = UserAccountStat.pending();
+            var userTimestamps = UserTimestamps.startingAt(Instant.now());
 
             // When
-            var user = User.reconstitute(id, email, password, UserStatus.PENDING, EmailVerificationStatus.PENDING, Instant.now(), Instant.now(), Instant.now());
+            var user = User.reconstitute(id, email, password, state, userTimestamps);
 
             // Then
             assertThat(user.id()).isEqualTo(id);
