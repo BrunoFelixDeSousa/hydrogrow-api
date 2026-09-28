@@ -1,4 +1,4 @@
-package dev.brunofelix.domain.exception;
+package dev.brunofelix.identity.domain.exception;
 
 public final class EmailNotVerifiedException extends DomainException {
 

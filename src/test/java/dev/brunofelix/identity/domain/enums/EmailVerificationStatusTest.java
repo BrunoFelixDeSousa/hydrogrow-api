@@ -1,4 +1,4 @@
-package dev.brunofelix.domain.enums;
+package dev.brunofelix.identity.domain.enums;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

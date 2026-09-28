@@ -1,4 +1,4 @@
-package dev.brunofelix.domain.valueobject;
+package dev.brunofelix.identity.domain.valueobject;
 
 import java.util.Objects;
 

@@ -1,4 +1,4 @@
-package dev.brunofelix.domain.entity;
+package dev.brunofelix.identity.domain.entity;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;

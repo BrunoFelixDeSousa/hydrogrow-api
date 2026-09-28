@@ -1,4 +1,4 @@
-package dev.brunofelix.domain.enums;
+package dev.brunofelix.identity.domain.enums;
 
 public enum UserStatus {
 

@@ -1,4 +1,4 @@
-package dev.brunofelix.domain.entity;
+package dev.brunofelix.identity.domain.entity;
 
 import dev.brunofelix.domain.enums.EmailVerificationStatus;
 import dev.brunofelix.domain.enums.UserStatus;
