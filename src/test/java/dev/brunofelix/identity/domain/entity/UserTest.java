@@ -65,7 +65,7 @@ class UserTest {
             var id = UserId.of("123e4567-e89b-12d3-a456-426614174000");
             var email = Email.of("user@example.com");
             var password = Password.of("password");
-            var state = UserAccountStat.pending();
+            var state = UserAccountState.pending();
             var userTimestamps = UserTimestamps.startingAt(Instant.now());
 
             // When

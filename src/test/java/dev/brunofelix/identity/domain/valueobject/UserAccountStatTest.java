@@ -23,7 +23,7 @@ public class UserAccountStatTest {
             var emailVerificationStatus = EmailVerificationStatus.VERIFIED;
 
             // When
-            var userAccountStat = new UserAccountStat(status, emailVerificationStatus);
+            var userAccountStat = new UserAccountState(status, emailVerificationStatus);
 
             // Then
             assertThat(userAccountStat.status()).isEqualTo(status);
@@ -34,7 +34,7 @@ public class UserAccountStatTest {
         @DisplayName("Should create a UserAccountStat with PENDING status and PENDING email verification status")
         void shouldCreateUserAccountStatWithPendingStatusAndPendingEmailVerificationStatus() {
             // Given
-            var userAccountStat = UserAccountStat.pending();
+            var userAccountStat = UserAccountState.pending();
 
             // When & Then
             assertThat(userAccountStat.status()).isEqualTo(UserStatus.PENDING);

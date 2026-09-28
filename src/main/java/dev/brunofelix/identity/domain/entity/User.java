@@ -27,7 +27,7 @@ public class User {
             final UserId id,
             final Email email,
             Password password,
-            final UserAccountStat state,
+            final UserAccountState state,
             final UserTimestamps userTimestamps
             ) {
         this.id = Objects.requireNonNull(id, "O identificador não pode ser nulo");
@@ -50,7 +50,7 @@ public class User {
                 id,
                 email,
                 password,
-                UserAccountStat.pending(),
+                UserAccountState.pending(),
                 UserTimestamps.startingAt(Instant.now())
         );
     }
@@ -59,7 +59,7 @@ public class User {
             final UserId id,
             final Email email,
             final Password password,
-            final UserAccountStat state,
+            final UserAccountState state,
             final UserTimestamps userTimestamps
     ) {
         return new User(
