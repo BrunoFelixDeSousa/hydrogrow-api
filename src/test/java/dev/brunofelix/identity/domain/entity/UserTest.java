@@ -3,12 +3,12 @@ package dev.brunofelix.identity.domain.entity;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
-import dev.brunofelix.domain.enums.EmailVerificationStatus;
-import dev.brunofelix.domain.enums.UserStatus;
-import dev.brunofelix.domain.exception.EmailAlreadyVerifiedException;
-import dev.brunofelix.domain.valueobject.Email;
-import dev.brunofelix.domain.valueobject.Password;
-import dev.brunofelix.domain.valueobject.UserId;
+import dev.brunofelix.identity.domain.enums.EmailVerificationStatus;
+import dev.brunofelix.identity.domain.enums.UserStatus;
+import dev.brunofelix.identity.domain.exception.EmailAlreadyVerifiedException;
+import dev.brunofelix.identity.domain.valueobject.Email;
+import dev.brunofelix.identity.domain.valueobject.Password;
+import dev.brunofelix.identity.domain.valueobject.UserId;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

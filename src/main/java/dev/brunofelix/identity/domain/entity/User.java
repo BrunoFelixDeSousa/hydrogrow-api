@@ -1,15 +1,15 @@
 package dev.brunofelix.identity.domain.entity;
 
-import dev.brunofelix.domain.enums.EmailVerificationStatus;
-import dev.brunofelix.domain.enums.UserStatus;
-import dev.brunofelix.domain.exception.EmailAlreadyVerifiedException;
-import dev.brunofelix.domain.exception.EmailNotVerifiedException;
-import dev.brunofelix.domain.exception.UserAlreadyActiveException;
-import dev.brunofelix.domain.exception.UserBlockedException;
-import dev.brunofelix.domain.exception.UserInactiveException;
-import dev.brunofelix.domain.valueobject.Email;
-import dev.brunofelix.domain.valueobject.Password;
-import dev.brunofelix.domain.valueobject.UserId;
+import dev.brunofelix.identity.domain.enums.EmailVerificationStatus;
+import dev.brunofelix.identity.domain.enums.UserStatus;
+import dev.brunofelix.identity.domain.exception.EmailAlreadyVerifiedException;
+import dev.brunofelix.identity.domain.exception.EmailNotVerifiedException;
+import dev.brunofelix.identity.domain.exception.UserAlreadyActiveException;
+import dev.brunofelix.identity.domain.exception.UserBlockedException;
+import dev.brunofelix.identity.domain.exception.UserInactiveException;
+import dev.brunofelix.identity.domain.valueobject.Email;
+import dev.brunofelix.identity.domain.valueobject.Password;
+import dev.brunofelix.identity.domain.valueobject.UserId;
 
 import java.time.Instant;
 import java.util.Objects;
