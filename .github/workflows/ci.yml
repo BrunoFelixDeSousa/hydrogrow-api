@@ -22,7 +22,7 @@ jobs:
           cache: maven
 
       - name: Check formatting
-        run: ./mvnw -B spotless:apply
+        run: ./mvnw -B spotless:check
 
       - name: Build
         run: ./mvnw clean verify -B

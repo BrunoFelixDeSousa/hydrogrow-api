@@ -6,6 +6,9 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "Executando pre-commit"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
+echo "Checa formatação..."
+./mvnw spotless:check
+
 echo "Executando testes unitários..."
 ./mvnw -q test
 
