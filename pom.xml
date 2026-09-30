@@ -22,6 +22,7 @@
         <checkstyle-plugin.version>3.6.0</checkstyle-plugin.version>
         <checkstyle.version>14.3.0</checkstyle.version>
         <error-prone.version>2.50.0</error-prone.version>
+        <spotbugs-plugin.version>4.10.4.1</spotbugs-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -216,6 +217,26 @@
                     </annotationProcessorPaths>
 
                 </configuration>
+            </plugin>
+
+            <!-- SpotBugs: inspeciona o bytecode compilado em busca de padrões perigosos. -->
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>${spotbugs-plugin.version}</version>
+                <configuration>
+                    <effort>Max</effort>
+                    <threshold>High</threshold>
+                    <xmlOutput>true</xmlOutput>
+                    <failOnError>true</failOnError>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>check-bytecode</id>
+                        <phase>verify</phase>
+                        <goals><goal>check</goal></goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

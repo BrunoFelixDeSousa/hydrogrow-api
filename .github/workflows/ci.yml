@@ -30,5 +30,8 @@ jobs:
       - name: Check test compile
         run: ./mvnw -B clean test-compile
 
+      - name: Check bytecode
+        run: ./mvnw -B compile spotbugs:check
+
       - name: Build
         run: ./mvnw clean verify -B
