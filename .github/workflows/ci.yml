@@ -24,5 +24,8 @@ jobs:
       - name: Check formatting
         run: ./mvnw -B spotless:apply
 
+      - name: Check style
+        run: ./mvnw -B checkstyle:check
+
       - name: Build
         run: ./mvnw clean verify -B
