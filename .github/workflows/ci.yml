@@ -27,5 +27,8 @@ jobs:
       - name: Check style
         run: ./mvnw -B checkstyle:check
 
+      - name: Check test compile
+        run: ./mvnw -B clean test-compile
+
       - name: Build
         run: ./mvnw clean verify -B
