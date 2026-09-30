@@ -21,5 +21,8 @@ jobs:
           distribution: temurin
           cache: maven
 
+      - name: Check formatting
+        run: ./mvnw -B spotless:apply
+
       - name: Build
-        run: ./mvnw verify -B
+        run: ./mvnw clean verify -B
