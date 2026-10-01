@@ -40,18 +40,30 @@ git commit
     ↓
 pre-commit
     ↓
+Checa formatação (Spotless)
+    ↓
+Checa estilo de código (Checkstyle)
+    ↓
+Checa análise estática (Error Prone)
+    ↓
+Checa bytecode (SpotBugs)
+    ↓
 testes unitários
     ↓
 commit
 ```
 
-A validação executada é:
+As validações executadas são:
 
 ```bash
+./mvnw -q spotless:check
+./mvnw -q checkstyle:check
+./mvnw -q errorprone:check
+./mvnw -q spotbugs:check
 ./mvnw -q test
 ```
 
-Caso os testes falhem, o commit será cancelado.
+Caso de falhas, o commit será cancelado.
 
 ## Pre-push
 
