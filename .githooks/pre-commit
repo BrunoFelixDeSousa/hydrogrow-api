@@ -18,10 +18,10 @@ echo "🚀 Executando validações de Pre-Commit"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 log_step "1/5 Checando formatação (Spotless)..."
-./mvnw -B -q spotless:check
+./mvnw -B spotless:check
 
 log_step "2/5 Checando estilo de código (Checkstyle)..."
-./mvnw -B -q checkstyle:check
+./mvnw -B checkstyle:check
 
 log_step "3/5 Checando análise estática (Error Prone)..."
 ./mvnw -B clean test-compile
@@ -30,7 +30,7 @@ log_step "4/5 Checando bytecode (SpotBugs)..."
 ./mvnw -B compile spotbugs:check
 
 log_step "5/5 Executando testes unitários..."
-./mvnw -B -q test
+./mvnw -B test
 
 trap - EXIT
 

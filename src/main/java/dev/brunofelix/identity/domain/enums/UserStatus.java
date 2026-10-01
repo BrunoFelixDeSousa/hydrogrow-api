@@ -1,18 +1,16 @@
 package dev.brunofelix.identity.domain.enums;
 
 public enum UserStatus {
+  PENDING,
+  ACTIVE,
+  BLOCKED,
+  DISABLED;
 
-    PENDING,
-    ACTIVE,
-    BLOCKED,
-    DISABLED;
+  public boolean canAuthenticate() {
+    return this == ACTIVE;
+  }
 
-    public boolean canAuthenticate() {
-        return this == ACTIVE;
-    }
-
-    public boolean isBlocked() {
-        return this == BLOCKED;
-    }
-
+  public boolean isBlocked() {
+    return this == BLOCKED;
+  }
 }

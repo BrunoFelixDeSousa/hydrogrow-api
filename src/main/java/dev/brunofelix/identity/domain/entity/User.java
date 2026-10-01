@@ -8,179 +8,166 @@ import dev.brunofelix.identity.domain.exception.UserAlreadyActiveException;
 import dev.brunofelix.identity.domain.exception.UserBlockedException;
 import dev.brunofelix.identity.domain.exception.UserInactiveException;
 import dev.brunofelix.identity.domain.valueobject.*;
-
 import java.time.Instant;
 import java.util.Objects;
 
 public class User {
 
-    private final UserId id;
-    private final Email email;
-    private Password password;
-    private UserStatus status;
-    private EmailVerificationStatus emailVerificationStatus;
-    private Instant lastLoginAt;
-    private final Instant createdAt;
-    private Instant updatedAt;
+  private final UserId id;
+  private final Email email;
+  private Password password;
+  private UserStatus status;
+  private EmailVerificationStatus emailVerificationStatus;
+  private Instant lastLoginAt;
+  private final Instant createdAt;
+  private Instant updatedAt;
 
-    private User(
-            final UserId id,
-            final Email email,
-            Password password,
-            final UserAccountState state,
-            final UserTimestamps userTimestamps
-            ) {
-        this.id = Objects.requireNonNull(id, "O identificador não pode ser nulo");
-        this.email = Objects.requireNonNull(email, "O e-mail não pode ser nulo");
-        this.password = Objects.requireNonNull(password, "A senha não pode ser nula");
-        this.status = Objects.requireNonNull(state.status(), "O status da conta não pode ser nulo");
-        this.emailVerificationStatus = Objects.requireNonNull(state.emailVerificationStatus(), "O estado de verificação do e-mail não pode ser nulo");
+  private User(
+      final UserId id,
+      final Email email,
+      Password password,
+      final UserAccountState state,
+      final UserTimestamps userTimestamps) {
+    this.id = Objects.requireNonNull(id, "O identificador não pode ser nulo");
+    this.email = Objects.requireNonNull(email, "O e-mail não pode ser nulo");
+    this.password = Objects.requireNonNull(password, "A senha não pode ser nula");
+    this.status = Objects.requireNonNull(state.status(), "O status da conta não pode ser nulo");
+    this.emailVerificationStatus =
+        Objects.requireNonNull(
+            state.emailVerificationStatus(), "O estado de verificação do e-mail não pode ser nulo");
 
-        this.lastLoginAt = userTimestamps.lastLoginAt();
-        this.createdAt = Objects.requireNonNull(userTimestamps.createdAt(), "A data de criação não pode ser nula");
-        this.updatedAt = Objects.requireNonNull(userTimestamps.updatedAt(), "A data de atualização não pode ser nula");
+    this.lastLoginAt = userTimestamps.lastLoginAt();
+    this.createdAt =
+        Objects.requireNonNull(userTimestamps.createdAt(), "A data de criação não pode ser nula");
+    this.updatedAt =
+        Objects.requireNonNull(
+            userTimestamps.updatedAt(), "A data de atualização não pode ser nula");
+  }
+
+  public static User create(final UserId id, final Email email, final Password password) {
+    return new User(
+        id, email, password, UserAccountState.pending(), UserTimestamps.startingAt(Instant.now()));
+  }
+
+  public static User reconstitute(
+      final UserId id,
+      final Email email,
+      final Password password,
+      final UserAccountState state,
+      final UserTimestamps userTimestamps) {
+    return new User(id, email, password, state, userTimestamps);
+  }
+
+  public void verifyEmail() {
+    if (emailVerificationStatus.isVerified()) {
+      throw new EmailAlreadyVerifiedException();
     }
 
-    public static User create(
-            final UserId id,
-            final Email email,
-            final Password password
-    ) {
-        return new User(
-                id,
-                email,
-                password,
-                UserAccountState.pending(),
-                UserTimestamps.startingAt(Instant.now())
-        );
+    emailVerificationStatus = EmailVerificationStatus.VERIFIED;
+    status = UserStatus.ACTIVE;
+
+    touch();
+  }
+
+  public void activate() {
+    if (status == UserStatus.ACTIVE) {
+      throw new UserAlreadyActiveException();
     }
 
-    public static User reconstitute(
-            final UserId id,
-            final Email email,
-            final Password password,
-            final UserAccountState state,
-            final UserTimestamps userTimestamps
-    ) {
-        return new User(
-                id,
-                email,
-                password,
-                state,
-                userTimestamps
-        );
+    if (!emailVerificationStatus.isVerified()) {
+      throw new EmailNotVerifiedException();
     }
 
-    public void verifyEmail() {
-        if (emailVerificationStatus.isVerified()) {
-            throw new EmailAlreadyVerifiedException();
-        }
+    status = UserStatus.ACTIVE;
 
-        emailVerificationStatus = EmailVerificationStatus.VERIFIED;
-        status = UserStatus.ACTIVE;
+    touch();
+  }
 
-        touch();
+  public void block() {
+    if (status == UserStatus.BLOCKED) {
+      return;
     }
 
-    public void activate() {
-        if (status == UserStatus.ACTIVE) {
-            throw new UserAlreadyActiveException();
-        }
+    status = UserStatus.BLOCKED;
 
-        if (!emailVerificationStatus.isVerified()) {
-            throw new EmailNotVerifiedException();
-        }
+    touch();
+  }
 
-        status = UserStatus.ACTIVE;
-
-        touch();
+  public void disable() {
+    if (status == UserStatus.DISABLED) {
+      return;
     }
 
-    public void block() {
-        if (status == UserStatus.BLOCKED) {
-            return;
-        }
+    status = UserStatus.DISABLED;
 
-        status = UserStatus.BLOCKED;
+    touch();
+  }
 
-        touch();
+  public void changePassword(final Password password) {
+    this.password = Objects.requireNonNull(password, "A senha não pode ser nula");
+
+    touch();
+  }
+
+  public void registerLogin() {
+    ensureCanLogin();
+
+    lastLoginAt = Instant.now();
+
+    touch();
+  }
+
+  public boolean canLogin() {
+    return status.canAuthenticate() && emailVerificationStatus.isVerified();
+  }
+
+  private void ensureCanLogin() {
+    if (status.isBlocked()) {
+      throw new UserBlockedException();
     }
 
-    public void disable() {
-        if (status == UserStatus.DISABLED) {
-            return;
-        }
-
-        status = UserStatus.DISABLED;
-
-        touch();
+    if (!status.canAuthenticate()) {
+      throw new UserInactiveException();
     }
 
-    public void changePassword(final Password password) {
-        this.password = Objects.requireNonNull(password, "A senha não pode ser nula");
-
-        touch();
+    if (!emailVerificationStatus.isVerified()) {
+      throw new EmailNotVerifiedException();
     }
+  }
 
-    public void registerLogin() {
-        ensureCanLogin();
+  private void touch() {
+    updatedAt = Instant.now();
+  }
 
-        lastLoginAt = Instant.now();
+  public UserId id() {
+    return id;
+  }
 
-        touch();
-    }
+  public Email email() {
+    return email;
+  }
 
-    public boolean canLogin() {
-        return status.canAuthenticate() && emailVerificationStatus.isVerified();
-    }
+  public Password password() {
+    return password;
+  }
 
-    private void ensureCanLogin() {
-        if (status.isBlocked()) {
-            throw new UserBlockedException();
-        }
+  public UserStatus status() {
+    return status;
+  }
 
-        if (!status.canAuthenticate()) {
-            throw new UserInactiveException();
-        }
+  public EmailVerificationStatus emailVerificationStatus() {
+    return emailVerificationStatus;
+  }
 
-        if (!emailVerificationStatus.isVerified()) {
-            throw new EmailNotVerifiedException();
-        }
-    }
+  public Instant lastLoginAt() {
+    return lastLoginAt;
+  }
 
-    private void touch() {
-        updatedAt = Instant.now();
-    }
+  public Instant createdAt() {
+    return createdAt;
+  }
 
-    public UserId id() {
-        return id;
-    }
-
-    public Email email() {
-        return email;
-    }
-
-    public Password password() {
-        return password;
-    }
-
-    public UserStatus status() {
-        return status;
-    }
-
-    public EmailVerificationStatus emailVerificationStatus() {
-        return emailVerificationStatus;
-    }
-
-    public Instant lastLoginAt() {
-        return lastLoginAt;
-    }
-
-    public Instant createdAt() {
-        return createdAt;
-    }
-
-    public Instant updatedAt() {
-        return updatedAt;
-    }
+  public Instant updatedAt() {
+    return updatedAt;
+  }
 }

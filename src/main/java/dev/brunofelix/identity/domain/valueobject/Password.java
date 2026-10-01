@@ -4,22 +4,22 @@ import java.util.Objects;
 
 public record Password(String hashedValue) {
 
-    public Password {
-        Objects.requireNonNull(hashedValue, "A senha não pode ser nula");
+  public Password {
+    Objects.requireNonNull(hashedValue, "A senha não pode ser nula");
 
-        hashedValue = hashedValue.trim();
-        
-        if (hashedValue.isBlank()) {
-            throw new IllegalArgumentException("A senha não pode ser vazia");
-        }
-    }
+    hashedValue = hashedValue.trim();
 
-    public static Password of(final String hashedValue) {
-        return new Password(hashedValue);
+    if (hashedValue.isBlank()) {
+      throw new IllegalArgumentException("A senha não pode ser vazia");
     }
+  }
 
-    @Override
-    public String toString() {
-        return "********";
-    }
+  public static Password of(final String hashedValue) {
+    return new Password(hashedValue);
+  }
+
+  @Override
+  public String toString() {
+    return "********";
+  }
 }

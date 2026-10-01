@@ -2,7 +2,7 @@ package dev.brunofelix.identity.domain.exception;
 
 public final class UserAlreadyActiveException extends DomainException {
 
-    public UserAlreadyActiveException() {
-        super("Usuário já está ativo");
-    }
+  public UserAlreadyActiveException() {
+    super("Usuário já está ativo");
+  }
 }

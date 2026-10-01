@@ -7,115 +7,115 @@ import dev.brunofelix.identity.domain.enums.EmailVerificationStatus;
 import dev.brunofelix.identity.domain.enums.UserStatus;
 import dev.brunofelix.identity.domain.exception.EmailAlreadyVerifiedException;
 import dev.brunofelix.identity.domain.valueobject.*;
+import java.time.Instant;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.time.Instant;
-
 @DisplayName("User")
 class UserTest {
 
-    @Nested
-    @DisplayName("When creating a user")
-    class  WhenCreatingAUser {
+  @Nested
+  @DisplayName("When creating a user")
+  class WhenCreatingAUser {
 
-        @Test
-        @DisplayName("Should create a user with PENDING status and PENDING email verification status")
-        void shouldCreateUserWithPendingStatusAndPendingEmailVerificationStatus() {
-            // Given
-            var id = UserId.of("123e4567-e89b-12d3-a456-426614174000");
-            var email = Email.of("user@example.com");
-            var password = Password.of("password");
+    @Test
+    @DisplayName("Should create a user with PENDING status and PENDING email verification status")
+    void shouldCreateUserWithPendingStatusAndPendingEmailVerificationStatus() {
+      // Given
+      var id = UserId.of("123e4567-e89b-12d3-a456-426614174000");
+      var email = Email.of("user@example.com");
+      var password = Password.of("password");
 
-            // When
-            var user = User.create(id, email, password);
+      // When
+      var user = User.create(id, email, password);
 
-            // Then
-            assertThat(user.status()).isEqualTo(UserStatus.PENDING);
-            assertThat(user.emailVerificationStatus()).isEqualTo(EmailVerificationStatus.PENDING);
-        }
-
-        @Test
-        @DisplayName("Should create a user with the given id, email and password")
-        void shouldCreateUserWithGivenIdEmailAndPassword() {
-            // Given
-            var id = UserId.of("123e4567-e89b-12d3-a456-426614174000");
-            var email = Email.of("user@example.com");
-            var password = Password.of("password");
-
-            // When
-            var user = User.create(id, email, password);
-
-            // Then
-            assertThat(user.id()).isEqualTo(id);
-            assertThat(user.email()).isEqualTo(email);
-            assertThat(user.password()).isEqualTo(password);
-        }
+      // Then
+      assertThat(user.status()).isEqualTo(UserStatus.PENDING);
+      assertThat(user.emailVerificationStatus()).isEqualTo(EmailVerificationStatus.PENDING);
     }
 
-    @Nested
-    @DisplayName("When reconstitute a user")
-    class WhenReconstituteAUser {
+    @Test
+    @DisplayName("Should create a user with the given id, email and password")
+    void shouldCreateUserWithGivenIdEmailAndPassword() {
+      // Given
+      var id = UserId.of("123e4567-e89b-12d3-a456-426614174000");
+      var email = Email.of("user@example.com");
+      var password = Password.of("password");
 
-        @Test
-        @DisplayName("Should reconstitute a user with the given parameters")
-        void shouldReconstituteUserWithGivenParameters() {
-            // Given
-            var id = UserId.of("123e4567-e89b-12d3-a456-426614174000");
-            var email = Email.of("user@example.com");
-            var password = Password.of("password");
-            var state = UserAccountState.pending();
-            var userTimestamps = UserTimestamps.startingAt(Instant.now());
+      // When
+      var user = User.create(id, email, password);
 
-            // When
-            var user = User.reconstitute(id, email, password, state, userTimestamps);
+      // Then
+      assertThat(user.id()).isEqualTo(id);
+      assertThat(user.email()).isEqualTo(email);
+      assertThat(user.password()).isEqualTo(password);
+    }
+  }
 
-            // Then
-            assertThat(user.id()).isEqualTo(id);
-            assertThat(user.email()).isEqualTo(email);
-            assertThat(user.password()).isEqualTo(password);
-            assertThat(user.status()).isEqualTo(UserStatus.PENDING);
-            assertThat(user.emailVerificationStatus()).isEqualTo(EmailVerificationStatus.PENDING);
-        }
+  @Nested
+  @DisplayName("When reconstitute a user")
+  class WhenReconstituteAUser {
+
+    @Test
+    @DisplayName("Should reconstitute a user with the given parameters")
+    void shouldReconstituteUserWithGivenParameters() {
+      // Given
+      var id = UserId.of("123e4567-e89b-12d3-a456-426614174000");
+      var email = Email.of("user@example.com");
+      var password = Password.of("password");
+      var state = UserAccountState.pending();
+      var userTimestamps = UserTimestamps.startingAt(Instant.now());
+
+      // When
+      var user = User.reconstitute(id, email, password, state, userTimestamps);
+
+      // Then
+      assertThat(user.id()).isEqualTo(id);
+      assertThat(user.email()).isEqualTo(email);
+      assertThat(user.password()).isEqualTo(password);
+      assertThat(user.status()).isEqualTo(UserStatus.PENDING);
+      assertThat(user.emailVerificationStatus()).isEqualTo(EmailVerificationStatus.PENDING);
+    }
+  }
+
+  @Nested
+  @DisplayName("When verify email")
+  class WhenVerifyEmail {
+
+    @Test
+    @DisplayName("Should verify email is verified and user status is ACTIVE")
+    void shouldVerifyEmail() {
+      // Given
+      var id = UserId.of("123e4567-e89b-12d3-a456-426614174000");
+      var email = Email.of("user@example.com");
+      var password = Password.of("password");
+
+      // When
+      var user = User.create(id, email, password);
+      user.verifyEmail();
+
+      // Then
+      assertThat(user.emailVerificationStatus()).isEqualTo(EmailVerificationStatus.VERIFIED);
+      assertThat(user.status()).isEqualTo(UserStatus.ACTIVE);
     }
 
-    @Nested
-    @DisplayName("When verify email")
-    class WhenVerifyEmail {
+    @Test
+    @DisplayName("Should throw EmailAlreadyVerifiedException when email is already verified")
+    void shouldThrowEmailAlreadyVerifiedExceptionWhenEmailIsAlreadyVerified() {
+      // Given
+      var id = UserId.of("123e4567-e89b-12d3-a456-426614174000");
+      var email = Email.of("user@example.com");
+      var password = Password.of("password");
 
-        @Test
-        @DisplayName("Should verify email is verified and user status is ACTIVE")
-        void shouldVerifyEmail() {
-            // Given
-            var id = UserId.of("123e4567-e89b-12d3-a456-426614174000");
-            var email = Email.of("user@example.com");
-            var password = Password.of("password");
+      // When
+      var user = User.create(id, email, password);
+      user.verifyEmail();
 
-            // When
-            var user = User.create(id, email, password);
-            user.verifyEmail();
-
-            // Then
-            assertThat(user.emailVerificationStatus()).isEqualTo(EmailVerificationStatus.VERIFIED);
-            assertThat(user.status()).isEqualTo(UserStatus.ACTIVE);
-        }
-
-        @Test
-        @DisplayName("Should throw EmailAlreadyVerifiedException when email is already verified")
-        void shouldThrowEmailAlreadyVerifiedExceptionWhenEmailIsAlreadyVerified() {
-            // Given
-            var id = UserId.of("123e4567-e89b-12d3-a456-426614174000");
-            var email = Email.of("user@example.com");
-            var password = Password.of("password");
-
-            // When
-            var user = User.create(id, email, password);
-            user.verifyEmail();
-
-            // Then
-            assertThatThrownBy(user::verifyEmail)
-                .isInstanceOf(EmailAlreadyVerifiedException.class).hasMessage("Email já foi verificado");
-        }
+      // Then
+      assertThatThrownBy(user::verifyEmail)
+          .isInstanceOf(EmailAlreadyVerifiedException.class)
+          .hasMessage("Email já foi verificado");
     }
+  }
 }
