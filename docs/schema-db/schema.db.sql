@@ -10,13 +10,14 @@ CREATE TABLE users (
     email TEXT NOT NULL,
     password_hash TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'PENDING',
-    email_verified BOOLEAN NOT NULL DEFAULT false,
+    email_verification_status TEXT NOT NULL DEFAULT 'PENDING',
     last_login_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT uq_users_email UNIQUE (email),
     CONSTRAINT ck_users_email_normalized CHECK (email = lower(btrim(email)) AND length(email) BETWEEN 3 AND 255),
-    CONSTRAINT ck_users_status CHECK (status IN ('PENDING', 'ACTIVE', 'BLOCKED', 'DISABLED'))
+    CONSTRAINT ck_users_status CHECK (status IN ('PENDING', 'ACTIVE', 'BLOCKED', 'DISABLED')),
+    CONSTRAINT ck_users_email_verification_status CHECK (email_verification_status IN ('PENDING', 'VERIFIED', 'FAILED'))
 );
 
 -- Um perfil global por usuário. O tenant apresentado no DTO vem da sessão autorizada, não desta tabela.
@@ -53,7 +54,8 @@ CREATE TABLE tenants (
     document TEXT,
     email TEXT,
     phone TEXT,
-    address TEXT,
+    street TEXT,
+    address_number TEXT,
     city TEXT,
     state TEXT,
     zip_code TEXT,

@@ -10,13 +10,14 @@ Table users {
   email text [not null]
   password_hash text [not null]
   status text [not null, default: 'PENDING']
-  email_verified boolean [not null, default: false]
+  email_verification_status text [not null, default: 'PENDING']
   last_login_at timestamptz
   created_at timestamptz [not null, default: `now()`]
   updated_at timestamptz [not null, default: `now()`]
   checks {
     `email = lower(btrim(email)) AND length(email) BETWEEN 3 AND 255` [name: 'ck_users_email_normalized']
     `status IN ('PENDING', 'ACTIVE', 'BLOCKED', 'DISABLED')` [name: 'ck_users_status']
+    `email_verification_status IN ('PENDING', 'VERIFIED', 'FAILED')` [name: 'ck_users_email_verification_status']
   }
   indexes {
     email [unique, name: 'uq_users_email']
