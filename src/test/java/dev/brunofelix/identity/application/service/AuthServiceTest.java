@@ -1,6 +1,7 @@
 package dev.brunofelix.identity.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 import dev.brunofelix.identity.application.port.ProfileStore;
 import dev.brunofelix.identity.application.port.UserStore;
@@ -17,39 +18,162 @@ import dev.brunofelix.tenancy.application.port.TenantStore;
 import dev.brunofelix.tenancy.domain.entity.Membership;
 import dev.brunofelix.tenancy.domain.entity.Tenant;
 import dev.brunofelix.tenancy.domain.enums.Plan;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.ArrayDeque;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class AuthServiceTest {
 
   private static final UUID USER_ID = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
   private static final UUID TENANT_ID = UUID.fromString("123e4567-e89b-12d3-a456-426614174001");
+  private static final Instant NOW = Instant.parse("2026-01-01T12:00:00Z");
+  private static final Email EMAIL = Email.of("user@example.com");
+  private static final PasswordHash PASSWORD_HASH = PasswordHash.of("hashed-current-password");
+
+  private SequenceIdGenerator ids;
+  private InMemoryUserStore users;
+  private CapturingTenantStore tenants;
+  private CapturingProfileStore profiles;
+  private CapturingMembershipStore memberships;
+  private AuthService service;
+
+  @BeforeEach
+  void setUp() {
+    ids = new SequenceIdGenerator(USER_ID, TENANT_ID);
+    users = new InMemoryUserStore();
+    tenants = new CapturingTenantStore();
+    profiles = new CapturingProfileStore();
+    memberships = new CapturingMembershipStore();
+    service =
+        new AuthService(
+            ids,
+            users,
+            new StubPasswordHasher(),
+            tenants,
+            memberships,
+            profiles,
+            Clock.fixed(NOW, ZoneOffset.UTC));
+  }
 
   @Test
   void shouldCreateSignupAggregateGraphWithOnlyRootIds() {
-    SequenceIdGenerator ids = new SequenceIdGenerator(USER_ID, TENANT_ID);
-    CapturingUserStore users = new CapturingUserStore();
-    CapturingTenantStore tenants = new CapturingTenantStore();
-    CapturingProfileStore profiles = new CapturingProfileStore();
-    CapturingMembershipStore memberships = new CapturingMembershipStore();
-    AuthService service =
-        new AuthService(ids, users, new StubPasswordHasher(), tenants, memberships, profiles);
-
     service.signup("User@Example.com", "plain-password", "Bruno Felix", "Hydro Grow");
 
+    User user = users.findById(USER_ID).orElseThrow();
     assertThat(ids.isExhausted()).isTrue();
-    assertThat(users.inserted.id()).isEqualTo(USER_ID);
-    assertThat(users.inserted.status()).isEqualTo(UserStatus.PENDING);
-    assertThat(users.inserted.emailVerificationStatus()).isEqualTo(EmailVerificationStatus.PENDING);
+    assertThat(user.id()).isEqualTo(USER_ID);
+    assertThat(user.status()).isEqualTo(UserStatus.PENDING);
+    assertThat(user.emailVerificationStatus()).isEqualTo(EmailVerificationStatus.PENDING);
     assertThat(tenants.inserted.id()).isEqualTo(TENANT_ID);
     assertThat(tenants.inserted.plan()).isEqualTo(Plan.BASIC);
     assertThat(profiles.inserted.userId()).isEqualTo(USER_ID);
     assertThat(memberships.inserted.tenantId()).isEqualTo(TENANT_ID);
     assertThat(memberships.inserted.userId()).isEqualTo(USER_ID);
+  }
+
+  @Test
+  void shouldRejectSignupWhenEmailIsAlreadyInUse() {
+    users.insert(pendingUser());
+
+    assertThatIllegalArgumentException()
+        .isThrownBy(
+            () -> service.signup("USER@example.com", "plain-password", "Bruno Felix", "Hydro Grow"))
+        .withMessage("E-mail já está em uso");
+
+    assertThat(tenants.inserted).isNull();
+    assertThat(profiles.inserted).isNull();
+    assertThat(memberships.inserted).isNull();
+  }
+
+  @Test
+  void shouldVerifyEmailAndPersistUser() {
+    User user = pendingUser();
+    users.insert(user);
+
+    service.verifyEmail(USER_ID);
+
+    assertThat(user.emailVerificationStatus()).isEqualTo(EmailVerificationStatus.VERIFIED);
+    assertThat(user.status()).isEqualTo(UserStatus.ACTIVE);
+    assertThat(users.updated).isSameAs(user);
+  }
+
+  @Test
+  void shouldAuthenticateActiveUserAndRegisterLoginTime() {
+    User user = activeUser();
+    users.insert(user);
+
+    UUID authenticatedUserId = service.authenticate(" USER@example.com ", "current-password");
+
+    assertThat(authenticatedUserId).isEqualTo(USER_ID);
+    assertThat(user.lastLoginAt()).isEqualTo(NOW);
+    assertThat(users.updated).isSameAs(user);
+  }
+
+  @Test
+  void shouldNotRevealWhetherEmailOrPasswordIsInvalid() {
+    users.insert(activeUser());
+
+    assertThatIllegalArgumentException()
+        .isThrownBy(() -> service.authenticate("user@example.com", "wrong-password"))
+        .withMessage("E-mail ou senha inválidos");
+    assertThatIllegalArgumentException()
+        .isThrownBy(() -> service.authenticate("unknown@example.com", "current-password"))
+        .withMessage("E-mail ou senha inválidos");
+
+    assertThat(users.updated).isNull();
+  }
+
+  @Test
+  void shouldChangePasswordAfterCheckingCurrentPassword() {
+    User user = activeUser();
+    users.insert(user);
+
+    service.changePassword(USER_ID, "current-password", "new-password");
+
+    assertThat(user.passwordHash()).isEqualTo(PasswordHash.of("hashed-new-password"));
+    assertThat(users.updated).isSameAs(user);
+  }
+
+  @Test
+  void shouldRejectPasswordChangeWhenCurrentPasswordIsInvalid() {
+    User user = activeUser();
+    users.insert(user);
+
+    assertThatIllegalArgumentException()
+        .isThrownBy(() -> service.changePassword(USER_ID, "wrong-password", "new-password"))
+        .withMessage("E-mail ou senha inválidos");
+
+    assertThat(user.passwordHash()).isEqualTo(PASSWORD_HASH);
+    assertThat(users.updated).isNull();
+  }
+
+  @Test
+  void shouldRejectOperationsForUnknownUser() {
+    assertThatIllegalArgumentException()
+        .isThrownBy(() -> service.verifyEmail(USER_ID))
+        .withMessage("Usuário não encontrado");
+    assertThatIllegalArgumentException()
+        .isThrownBy(() -> service.changePassword(USER_ID, "current-password", "new-password"))
+        .withMessage("Usuário não encontrado");
+  }
+
+  private static User pendingUser() {
+    return User.register(USER_ID, EMAIL, PASSWORD_HASH);
+  }
+
+  private static User activeUser() {
+    User user = pendingUser();
+    user.verifyEmail();
+    return user;
   }
 
   private static final class SequenceIdGenerator implements IdGenerator {
@@ -83,18 +207,30 @@ class AuthServiceTest {
     }
   }
 
-  private static final class CapturingUserStore implements UserStore {
+  private static final class InMemoryUserStore implements UserStore {
 
-    private User inserted;
+    private final Map<UUID, User> users = new HashMap<>();
+    private User updated;
 
     @Override
-    public boolean emailExists(final Email email) {
-      return false;
+    public Optional<User> findById(final UUID id) {
+      return Optional.ofNullable(users.get(id));
+    }
+
+    @Override
+    public Optional<User> findByEmail(final Email email) {
+      return users.values().stream().filter(user -> user.email().equals(email)).findFirst();
     }
 
     @Override
     public void insert(final User user) {
-      inserted = user;
+      users.put(user.id(), user);
+    }
+
+    @Override
+    public void update(final User user) {
+      users.put(user.id(), user);
+      updated = user;
     }
   }
 

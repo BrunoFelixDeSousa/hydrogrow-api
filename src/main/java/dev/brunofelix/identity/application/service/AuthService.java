@@ -14,8 +14,13 @@ import dev.brunofelix.tenancy.domain.entity.Membership;
 import dev.brunofelix.tenancy.domain.entity.Tenant;
 import dev.brunofelix.tenancy.domain.enums.Plan;
 import jakarta.transaction.Transactional;
+import java.time.Clock;
+import java.util.Objects;
+import java.util.UUID;
 
 public class AuthService {
+
+  private static final String INVALID_CREDENTIALS = "E-mail ou senha inválidos";
 
   private final UserStore userStore;
   private final IdGenerator ids;
@@ -23,6 +28,7 @@ public class AuthService {
   private final TenantStore tenantStore;
   private final MembershipStore membershipStore;
   private final ProfileStore profileStore;
+  private final Clock clock;
 
   public AuthService(
       IdGenerator ids,
@@ -30,21 +36,24 @@ public class AuthService {
       PasswordHasher passwordHasher,
       TenantStore tenantStore,
       MembershipStore membershipStore,
-      ProfileStore profileStore) {
+      ProfileStore profileStore,
+      Clock clock) {
     this.ids = ids;
     this.userStore = userStore;
     this.passwordHasher = passwordHasher;
     this.tenantStore = tenantStore;
     this.membershipStore = membershipStore;
     this.profileStore = profileStore;
+    this.clock = clock;
   }
 
   @Transactional
-  public void signup(String email, String password, String fullName, String companyName) {
+  public void signup(
+      final String email, final String password, final String fullName, final String companyName) {
     var emailNormalized = Email.of(email);
 
-    if (userStore.emailExists(emailNormalized)) {
-      throw new IllegalArgumentException("Email já está em uso");
+    if (userStore.findByEmail(emailNormalized).isPresent()) {
+      throw new IllegalArgumentException("E-mail já está em uso");
     }
 
     var user = User.register(ids.generate(), emailNormalized, passwordHasher.hash(password));
@@ -58,5 +67,50 @@ public class AuthService {
 
     var membership = Membership.create(tenant.id(), user.id());
     membershipStore.insert(membership);
+  }
+
+  @Transactional
+  public void verifyEmail(final UUID userId) {
+    User user = findUser(userId);
+
+    user.verifyEmail();
+    userStore.update(user);
+  }
+
+  @Transactional
+  public UUID authenticate(final String email, final String password) {
+    Email normalizedEmail = Email.of(email);
+    User user =
+        userStore
+            .findByEmail(normalizedEmail)
+            .orElseThrow(() -> new IllegalArgumentException(INVALID_CREDENTIALS));
+
+    if (!passwordHasher.matches(password, user.passwordHash())) {
+      throw new IllegalArgumentException(INVALID_CREDENTIALS);
+    }
+
+    user.registerLogin(clock.instant());
+    userStore.update(user);
+    return user.id();
+  }
+
+  @Transactional
+  public void changePassword(
+      final UUID userId, final String currentPassword, final String newPassword) {
+    User user = findUser(userId);
+
+    if (!passwordHasher.matches(currentPassword, user.passwordHash())) {
+      throw new IllegalArgumentException(INVALID_CREDENTIALS);
+    }
+
+    user.changePassword(passwordHasher.hash(newPassword));
+    userStore.update(user);
+  }
+
+  private User findUser(final UUID userId) {
+    Objects.requireNonNull(userId, "O identificador do usuário não pode ser nulo");
+    return userStore
+        .findById(userId)
+        .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
   }
 }
