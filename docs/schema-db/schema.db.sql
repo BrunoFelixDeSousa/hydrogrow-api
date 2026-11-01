@@ -581,5 +581,5 @@ INSERT INTO plans (id, label, price, product_limit, user_limit) VALUES
 
 -- Invariantes entre linhas (saldo/movimentos, total/itens, limite de plano, último admin,
 -- expiração do refresh limitada à sessão e magnitude do estorno) exigem transações
--- nos casos de uso; não são garantidas apenas por CHECK. Ver ARCHITECTURE_DECISIONS.md.
+-- nos casos de uso; não são garantidas apenas por CHECK. Ver ../ARCHITECTURE_DECISIONS.md.
 COMMIT;

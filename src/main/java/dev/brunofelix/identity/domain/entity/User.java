@@ -7,55 +7,51 @@ import dev.brunofelix.identity.domain.exception.EmailNotVerifiedException;
 import dev.brunofelix.identity.domain.exception.UserAlreadyActiveException;
 import dev.brunofelix.identity.domain.exception.UserBlockedException;
 import dev.brunofelix.identity.domain.exception.UserInactiveException;
-import dev.brunofelix.identity.domain.valueobject.*;
+import dev.brunofelix.identity.domain.valueobject.Email;
+import dev.brunofelix.identity.domain.valueobject.PasswordHash;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.UUID;
 
-public class User {
+public final class User {
 
-  private final UserId id;
+  private final UUID id;
   private final Email email;
-  private Password password;
+  private PasswordHash passwordHash;
   private UserStatus status;
   private EmailVerificationStatus emailVerificationStatus;
   private Instant lastLoginAt;
-  private final Instant createdAt;
-  private Instant updatedAt;
 
   private User(
-      final UserId id,
+      final UUID id,
       final Email email,
-      Password password,
-      final UserAccountState state,
-      final UserTimestamps userTimestamps) {
+      final PasswordHash passwordHash,
+      final UserStatus status,
+      final EmailVerificationStatus emailVerificationStatus,
+      final Instant lastLoginAt) {
     this.id = Objects.requireNonNull(id, "O identificador não pode ser nulo");
     this.email = Objects.requireNonNull(email, "O e-mail não pode ser nulo");
-    this.password = Objects.requireNonNull(password, "A senha não pode ser nula");
-    this.status = Objects.requireNonNull(state.status(), "O status da conta não pode ser nulo");
+    this.passwordHash = Objects.requireNonNull(passwordHash, "O hash da senha não pode ser nulo");
+    this.status = Objects.requireNonNull(status, "O status da conta não pode ser nulo");
     this.emailVerificationStatus =
         Objects.requireNonNull(
-            state.emailVerificationStatus(), "O estado de verificação do e-mail não pode ser nulo");
-
-    this.lastLoginAt = userTimestamps.lastLoginAt();
-    this.createdAt =
-        Objects.requireNonNull(userTimestamps.createdAt(), "A data de criação não pode ser nula");
-    this.updatedAt =
-        Objects.requireNonNull(
-            userTimestamps.updatedAt(), "A data de atualização não pode ser nula");
+            emailVerificationStatus, "O estado de verificação do e-mail não pode ser nulo");
+    this.lastLoginAt = lastLoginAt;
   }
 
-  public static User create(final UserId id, final Email email, final Password password) {
+  public static User register(final UUID id, final Email email, final PasswordHash passwordHash) {
     return new User(
-        id, email, password, UserAccountState.pending(), UserTimestamps.startingAt(Instant.now()));
+        id, email, passwordHash, UserStatus.PENDING, EmailVerificationStatus.PENDING, null);
   }
 
-  public static User reconstitute(
-      final UserId id,
+  public static User restore(
+      final UUID id,
       final Email email,
-      final Password password,
-      final UserAccountState state,
-      final UserTimestamps userTimestamps) {
-    return new User(id, email, password, state, userTimestamps);
+      final PasswordHash passwordHash,
+      final UserStatus status,
+      final EmailVerificationStatus emailVerificationStatus,
+      final Instant lastLoginAt) {
+    return new User(id, email, passwordHash, status, emailVerificationStatus, lastLoginAt);
   }
 
   public void verifyEmail() {
@@ -65,8 +61,6 @@ public class User {
 
     emailVerificationStatus = EmailVerificationStatus.VERIFIED;
     status = UserStatus.ACTIVE;
-
-    touch();
   }
 
   public void activate() {
@@ -79,8 +73,6 @@ public class User {
     }
 
     status = UserStatus.ACTIVE;
-
-    touch();
   }
 
   public void block() {
@@ -89,8 +81,6 @@ public class User {
     }
 
     status = UserStatus.BLOCKED;
-
-    touch();
   }
 
   public void disable() {
@@ -99,22 +89,15 @@ public class User {
     }
 
     status = UserStatus.DISABLED;
-
-    touch();
   }
 
-  public void changePassword(final Password password) {
-    this.password = Objects.requireNonNull(password, "A senha não pode ser nula");
-
-    touch();
+  public void changePassword(final PasswordHash passwordHash) {
+    this.passwordHash = Objects.requireNonNull(passwordHash, "O hash da senha não pode ser nulo");
   }
 
-  public void registerLogin() {
+  public void registerLogin(final Instant occurredAt) {
     ensureCanLogin();
-
-    lastLoginAt = Instant.now();
-
-    touch();
+    lastLoginAt = Objects.requireNonNull(occurredAt, "A data do login não pode ser nula");
   }
 
   public boolean canLogin() {
@@ -135,11 +118,7 @@ public class User {
     }
   }
 
-  private void touch() {
-    updatedAt = Instant.now();
-  }
-
-  public UserId id() {
+  public UUID id() {
     return id;
   }
 
@@ -147,8 +126,8 @@ public class User {
     return email;
   }
 
-  public Password password() {
-    return password;
+  public PasswordHash passwordHash() {
+    return passwordHash;
   }
 
   public UserStatus status() {
@@ -161,13 +140,5 @@ public class User {
 
   public Instant lastLoginAt() {
     return lastLoginAt;
-  }
-
-  public Instant createdAt() {
-    return createdAt;
-  }
-
-  public Instant updatedAt() {
-    return updatedAt;
   }
 }

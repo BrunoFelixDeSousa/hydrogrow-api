@@ -59,6 +59,13 @@
             <artifactId>quarkus-arc</artifactId>
         </dependency>
 
+        <!-- UUID v7 -->
+        <dependency>
+            <groupId>com.fasterxml.uuid</groupId>
+            <artifactId>java-uuid-generator</artifactId>
+            <version>5.2.0</version>
+        </dependency>
+
         <!-- Test Dependencies -->
         <!-- JUnit - Framework de testes -->
         <dependency>
@@ -103,6 +110,9 @@
                     <systemPropertyVariables>
                         <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
                         <maven.home>${maven.home}</maven.home>
+                        <quarkus.jacoco.data-file>${project.build.directory}/jacoco.exec</quarkus.jacoco.data-file>
+                        <quarkus.jacoco.reuse-data-file>true</quarkus.jacoco.reuse-data-file>
+                        <quarkus.jacoco.report>false</quarkus.jacoco.report>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
@@ -240,22 +250,6 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-
-            <!-- JaCoCo: Cobre testes quarkus -->
-            <plugin>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>${surefire-plugin.version}</version>
-                <configuration>
-                    <argLine>@{argLine}</argLine>
-                    <systemPropertyVariables>
-                        <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
-                        <maven.home>${maven.home}</maven.home>
-                        <quarkus.jacoco.data-file>${project.build.directory}/jacoco.exec</quarkus.jacoco.data-file>
-                        <quarkus.jacoco.reuse-data-file>true</quarkus.jacoco.reuse-data-file>
-                        <quarkus.jacoco.report>false</quarkus.jacoco.report>
-                    </systemPropertyVariables>
-                </configuration>
             </plugin>
 
             <!-- JaCoCo: cobre testes junit -->

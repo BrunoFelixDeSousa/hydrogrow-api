@@ -1,29 +1,53 @@
 package dev.brunofelix.identity.domain.entity;
 
-import dev.brunofelix.identity.domain.valueobject.ProfileId;
-import dev.brunofelix.identity.domain.valueobject.UserId;
-import dev.brunofelix.shared.domain.EntityValidation;
 import dev.brunofelix.shared.domain.valueobject.Name;
-import java.time.Instant;
+import java.util.Objects;
+import java.util.UUID;
 
-public record Profile(
-    ProfileId id,
-    UserId userId,
-    Name fullName,
-    String avatarUrl,
-    Instant createdAt,
-    Instant updatedAt) {
-  public Profile {
-    id = EntityValidation.required(id, "O identificador do perfil é obrigatório");
-    userId = EntityValidation.required(userId, "O identificador do usuário é obrigatório");
-    fullName = EntityValidation.required(fullName, "O nome completo é obrigatório");
-    createdAt = EntityValidation.required(createdAt, "A data de criação do perfil é obrigatória");
-    updatedAt =
-        EntityValidation.required(updatedAt, "A data de atualização do perfil é obrigatória");
+public final class Profile {
+
+  private final UUID userId;
+  private Name fullName;
+  private String avatarUrl;
+
+  private Profile(final UUID userId, final Name fullName, final String avatarUrl) {
+    this.userId = Objects.requireNonNull(userId, "O identificador do usuário é obrigatório");
+    this.fullName = Objects.requireNonNull(fullName, "O nome completo é obrigatório");
+    this.avatarUrl = normalizeOptional(avatarUrl);
   }
 
-  public static Profile create(
-      final ProfileId id, final UserId userId, final Name fullName, final Instant createdAt) {
-    return new Profile(id, userId, fullName, null, createdAt, createdAt);
+  public static Profile create(final UUID userId, final Name fullName) {
+    return new Profile(userId, fullName, null);
+  }
+
+  public static Profile restore(final UUID userId, final Name fullName, final String avatarUrl) {
+    return new Profile(userId, fullName, avatarUrl);
+  }
+
+  public void rename(final Name fullName) {
+    this.fullName = Objects.requireNonNull(fullName, "O nome completo é obrigatório");
+  }
+
+  public void changeAvatar(final String avatarUrl) {
+    this.avatarUrl = normalizeOptional(avatarUrl);
+  }
+
+  private static String normalizeOptional(final String value) {
+    if (value == null || value.isBlank()) {
+      return null;
+    }
+    return value.trim();
+  }
+
+  public UUID userId() {
+    return userId;
+  }
+
+  public Name fullName() {
+    return fullName;
+  }
+
+  public String avatarUrl() {
+    return avatarUrl;
   }
 }

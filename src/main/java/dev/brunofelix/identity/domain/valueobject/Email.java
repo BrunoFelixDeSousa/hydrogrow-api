@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 public record Email(String value) {
 
   private static final Pattern EMAIL_PATTERN =
-      Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
+      Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,63}$", Pattern.CASE_INSENSITIVE);
 
   public Email {
     Objects.requireNonNull(value, "O email não pode ser nulo");
@@ -16,6 +16,10 @@ public record Email(String value) {
 
     if (value.isBlank()) {
       throw new IllegalArgumentException("O email não pode ser vazio");
+    }
+
+    if (value.length() > 255) {
+      throw new IllegalArgumentException("O email deve ter no máximo 255 caracteres");
     }
 
     if (!EMAIL_PATTERN.matcher(value).matches()) {

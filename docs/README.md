@@ -14,8 +14,10 @@ A Hydrogrow, apesar de ser um projeto de laboratório, é um projeto real, que e
 ## Estrutura da documentação das ferramentas utilizadas
 
 - [README principal](../README.md) — instruções gerais de execução e configuração do projeto.
+- [Decisões de arquitetura](ARCHITECTURE_DECISIONS.md) — padrões do domínio e da persistência.
 - [Arquitetura do banco](schema-db/schema.db.sql) — modelo de dados em SQL.
 - [Diagrama do banco](schema-db/schema.dbml) — visão visual do schema.
+- [Diagramas Mermaid](schema-db/diagrams.md) — visões do modelo separadas por domínio.
 - [Git Hooks](./git-hooks.md) — Validações antes do commit e push
 
 ## Plugins utilizados para manter a qualidade do código:

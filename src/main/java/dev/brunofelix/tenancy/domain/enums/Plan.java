@@ -1,19 +1,25 @@
 package dev.brunofelix.tenancy.domain.enums;
 
+import java.util.Arrays;
+
 public enum Plan {
-  BASIC,
-  PRO,
-  PREMIUM;
+  BASIC("basico"),
+  PROFESSIONAL("profissional");
 
-  public boolean isPremium() {
-    return this == PREMIUM;
+  private final String code;
+
+  Plan(final String code) {
+    this.code = code;
   }
 
-  public boolean isPro() {
-    return this == PRO;
+  public String code() {
+    return code;
   }
 
-  public boolean isBasic() {
-    return this == BASIC;
+  public static Plan fromCode(final String code) {
+    return Arrays.stream(values())
+        .filter(plan -> plan.code.equals(code))
+        .findFirst()
+        .orElseThrow(() -> new IllegalArgumentException("Plano desconhecido: " + code));
   }
 }

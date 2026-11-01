@@ -1,11 +1,14 @@
 package dev.brunofelix.tenancy.domain.valueobject;
 
+import java.util.Objects;
+
 public record Phone(String value) {
 
   public Phone {
+    Objects.requireNonNull(value, "O telefone não pode ser nulo");
     value = value.trim();
 
-    if (value.length() != 11) {
+    if (!value.matches("[0-9]{11}")) {
       throw new IllegalArgumentException(
           "O telefone deve conter apenas 11 dígitos, incluindo o DDD");
     }

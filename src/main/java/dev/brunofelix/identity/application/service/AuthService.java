@@ -6,18 +6,14 @@ import dev.brunofelix.identity.domain.entity.Profile;
 import dev.brunofelix.identity.domain.entity.User;
 import dev.brunofelix.identity.domain.service.PasswordHasher;
 import dev.brunofelix.identity.domain.valueobject.Email;
-import dev.brunofelix.identity.domain.valueobject.ProfileId;
-import dev.brunofelix.identity.domain.valueobject.UserId;
 import dev.brunofelix.shared.domain.valueobject.Name;
 import dev.brunofelix.shared.service.IdGenerator;
-import dev.brunofelix.tenancy.application.port.TenantMemberShipStore;
+import dev.brunofelix.tenancy.application.port.MembershipStore;
 import dev.brunofelix.tenancy.application.port.TenantStore;
+import dev.brunofelix.tenancy.domain.entity.Membership;
 import dev.brunofelix.tenancy.domain.entity.Tenant;
-import dev.brunofelix.tenancy.domain.entity.TenantMemberShip;
-import dev.brunofelix.tenancy.domain.valueobject.TenantId;
-import dev.brunofelix.tenancy.domain.valueobject.TenantMembershipId;
+import dev.brunofelix.tenancy.domain.enums.Plan;
 import jakarta.transaction.Transactional;
-import java.time.Instant;
 
 public class AuthService {
 
@@ -25,7 +21,7 @@ public class AuthService {
   private final IdGenerator ids;
   private final PasswordHasher passwordHasher;
   private final TenantStore tenantStore;
-  private final TenantMemberShipStore tenantMemberShipStore;
+  private final MembershipStore membershipStore;
   private final ProfileStore profileStore;
 
   public AuthService(
@@ -33,13 +29,13 @@ public class AuthService {
       UserStore userStore,
       PasswordHasher passwordHasher,
       TenantStore tenantStore,
-      TenantMemberShipStore tenantMemberShipStore,
+      MembershipStore membershipStore,
       ProfileStore profileStore) {
     this.ids = ids;
     this.userStore = userStore;
     this.passwordHasher = passwordHasher;
     this.tenantStore = tenantStore;
-    this.tenantMemberShipStore = tenantMemberShipStore;
+    this.membershipStore = membershipStore;
     this.profileStore = profileStore;
   }
 
@@ -51,22 +47,16 @@ public class AuthService {
       throw new IllegalArgumentException("Email já está em uso");
     }
 
-    var user =
-        User.create(UserId.of(ids.generate()), emailNormalized, passwordHasher.hash(password));
-
-    user.verifyEmail();
+    var user = User.register(ids.generate(), emailNormalized, passwordHasher.hash(password));
     userStore.insert(user);
 
-    var now = Instant.now();
-
-    Tenant tenant = Tenant.builder(TenantId.of(ids.generate()), Name.of(companyName), now).build();
+    Tenant tenant = Tenant.create(ids.generate(), Name.of(companyName), Plan.BASIC);
     tenantStore.insert(tenant);
 
-    var profile = Profile.create(ProfileId.of(ids.generate()), user.id(), Name.of(fullName), now);
+    var profile = Profile.create(user.id(), Name.of(fullName));
     profileStore.insert(profile);
 
-    var tenantMemberShip =
-        TenantMemberShip.create(TenantMembershipId.of(ids.generate()), tenant.id(), user.id(), now);
-    tenantMemberShipStore.insert(tenantMemberShip);
+    var membership = Membership.create(tenant.id(), user.id());
+    membershipStore.insert(membership);
   }
 }

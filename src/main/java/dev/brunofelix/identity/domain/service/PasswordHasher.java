@@ -1,10 +1,10 @@
 package dev.brunofelix.identity.domain.service;
 
-import dev.brunofelix.identity.domain.valueobject.Password;
+import dev.brunofelix.identity.domain.valueobject.PasswordHash;
 
 public interface PasswordHasher {
 
-  Password hash(final String password);
+  PasswordHash hash(final String password);
 
-  boolean matches(final String password, final Password hashedPassword);
+  boolean matches(final String password, final PasswordHash passwordHash);
 }

@@ -1,114 +1,143 @@
 package dev.brunofelix.tenancy.domain.entity;
 
-import dev.brunofelix.shared.domain.EntityValidation;
 import dev.brunofelix.shared.domain.valueobject.Name;
+import dev.brunofelix.tenancy.domain.enums.Plan;
 import dev.brunofelix.tenancy.domain.valueobject.Address;
 import dev.brunofelix.tenancy.domain.valueobject.Phone;
-import dev.brunofelix.tenancy.domain.valueobject.TenantId;
-import java.time.Instant;
+import java.util.Objects;
+import java.util.UUID;
 
-public record Tenant(
-    TenantId id,
-    Name name,
-    String document,
-    String email,
-    Phone phone,
-    Address address,
-    String plan,
-    boolean isActive,
-    boolean subscriptionActive,
-    Instant createdAt,
-    Instant updatedAt) {
+public final class Tenant {
 
-  public Tenant {
-    id = EntityValidation.required(id, "O identificador do tenant é obrigatório");
-    name = EntityValidation.required(name, "O nome do tenant é obrigatório");
-    plan = EntityValidation.required(plan, "O plano do tenant é obrigatório");
-    createdAt = EntityValidation.required(createdAt, "A data de criação do tenant é obrigatória");
-    updatedAt =
-        EntityValidation.required(updatedAt, "A data de atualização do tenant é obrigatória");
+  private final UUID id;
+  private Name name;
+  private String document;
+  private String email;
+  private Phone phone;
+  private Address address;
+  private Plan plan;
+  private boolean active;
+  private boolean subscriptionActive;
+
+  private Tenant(
+      final UUID id,
+      final Name name,
+      final String document,
+      final String email,
+      final Phone phone,
+      final Address address,
+      final Plan plan,
+      final boolean active,
+      final boolean subscriptionActive) {
+    this.id = Objects.requireNonNull(id, "O identificador do tenant é obrigatório");
+    this.name = Objects.requireNonNull(name, "O nome do tenant é obrigatório");
+    this.document = normalizeOptional(document);
+    this.email = normalizeOptional(email);
+    this.phone = phone;
+    this.address = address;
+    this.plan = Objects.requireNonNull(plan, "O plano do tenant é obrigatório");
+    this.active = active;
+    this.subscriptionActive = subscriptionActive;
   }
 
-  public static Builder builder(final TenantId id, final Name name, final Instant createdAt) {
-    return new Builder(id, name, createdAt);
+  public static Tenant create(final UUID id, final Name name, final Plan plan) {
+    return new Tenant(id, name, null, null, null, null, plan, true, false);
   }
 
-  public static final class Builder {
+  public static Tenant restore(
+      final UUID id,
+      final Name name,
+      final String document,
+      final String email,
+      final Phone phone,
+      final Address address,
+      final Plan plan,
+      final boolean active,
+      final boolean subscriptionActive) {
+    return new Tenant(id, name, document, email, phone, address, plan, active, subscriptionActive);
+  }
 
-    private final TenantId id;
-    private final Name name;
-    private String document;
-    private String email;
-    private Phone phone;
-    private Address address;
-    private String plan = "BASIC";
-    private boolean isActive = true;
-    private boolean subscriptionActive;
-    private final Instant createdAt;
-    private Instant updatedAt;
+  public void rename(final Name name) {
+    this.name = Objects.requireNonNull(name, "O nome do tenant é obrigatório");
+  }
 
-    private Builder(final TenantId id, final Name name, final Instant createdAt) {
-      this.id = EntityValidation.required(id, "O identificador do tenant é obrigatório");
-      this.name = EntityValidation.required(name, "O nome do tenant é obrigatório");
-      this.createdAt =
-          EntityValidation.required(createdAt, "A data de criação do tenant é obrigatória");
-      this.updatedAt = createdAt;
+  public void changeContact(final String email, final Phone phone) {
+    this.email = normalizeOptional(email);
+    this.phone = phone;
+  }
+
+  public void changeAddress(final Address address) {
+    this.address = address;
+  }
+
+  public void changeDocument(final String document) {
+    this.document = normalizeOptional(document);
+  }
+
+  public void changePlan(final Plan plan) {
+    this.plan = Objects.requireNonNull(plan, "O plano do tenant é obrigatório");
+  }
+
+  public void activate() {
+    active = true;
+  }
+
+  public void deactivate() {
+    active = false;
+    subscriptionActive = false;
+  }
+
+  public void activateSubscription() {
+    if (!active) {
+      throw new IllegalStateException("Um tenant inativo não pode ativar a assinatura");
     }
+    subscriptionActive = true;
+  }
 
-    public Builder document(final String document) {
-      this.document = document;
-      return this;
-    }
+  public void deactivateSubscription() {
+    subscriptionActive = false;
+  }
 
-    public Builder email(final String email) {
-      this.email = email;
-      return this;
+  private static String normalizeOptional(final String value) {
+    if (value == null || value.isBlank()) {
+      return null;
     }
+    return value.trim();
+  }
 
-    public Builder phone(final Phone phone) {
-      this.phone = phone;
-      return this;
-    }
+  public UUID id() {
+    return id;
+  }
 
-    public Builder address(final Address address) {
-      this.address = address;
-      return this;
-    }
+  public Name name() {
+    return name;
+  }
 
-    public Builder plan(final String plan) {
-      this.plan = EntityValidation.required(plan, "O plano do tenant é obrigatório");
-      return this;
-    }
+  public String document() {
+    return document;
+  }
 
-    public Builder isActive(final boolean isActive) {
-      this.isActive = isActive;
-      return this;
-    }
+  public String email() {
+    return email;
+  }
 
-    public Builder subscriptionActive(final boolean subscriptionActive) {
-      this.subscriptionActive = subscriptionActive;
-      return this;
-    }
+  public Phone phone() {
+    return phone;
+  }
 
-    public Builder updatedAt(final Instant updatedAt) {
-      this.updatedAt =
-          EntityValidation.required(updatedAt, "A data de atualização do tenant é obrigatória");
-      return this;
-    }
+  public Address address() {
+    return address;
+  }
 
-    public Tenant build() {
-      return new Tenant(
-          id,
-          name,
-          document,
-          email,
-          phone,
-          address,
-          plan,
-          isActive,
-          subscriptionActive,
-          createdAt,
-          updatedAt);
-    }
+  public Plan plan() {
+    return plan;
+  }
+
+  public boolean isActive() {
+    return active;
+  }
+
+  public boolean isSubscriptionActive() {
+    return subscriptionActive;
   }
 }

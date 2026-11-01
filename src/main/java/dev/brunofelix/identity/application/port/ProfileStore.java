@@ -1,12 +1,12 @@
 package dev.brunofelix.identity.application.port;
 
 import dev.brunofelix.identity.domain.entity.Profile;
-import dev.brunofelix.identity.domain.valueobject.ProfileId;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface ProfileStore {
 
-  Optional<Profile> find(final ProfileId id);
+  Optional<Profile> findByUserId(final UUID userId);
 
   void insert(final Profile profile);
 }

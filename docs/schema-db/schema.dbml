@@ -64,7 +64,8 @@ Table tenants {
   document text
   email text
   phone text
-  address text
+  street text
+  address_number text
   city text
   state text
   zip_code text

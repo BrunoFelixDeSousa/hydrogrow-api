@@ -1,121 +1,115 @@
 package dev.brunofelix.identity.domain.entity;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import dev.brunofelix.identity.domain.enums.EmailVerificationStatus;
 import dev.brunofelix.identity.domain.enums.UserStatus;
 import dev.brunofelix.identity.domain.exception.EmailAlreadyVerifiedException;
-import dev.brunofelix.identity.domain.valueobject.*;
+import dev.brunofelix.identity.domain.exception.EmailNotVerifiedException;
+import dev.brunofelix.identity.domain.exception.UserBlockedException;
+import dev.brunofelix.identity.domain.valueobject.Email;
+import dev.brunofelix.identity.domain.valueobject.PasswordHash;
 import java.time.Instant;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
-@DisplayName("User")
 class UserTest {
 
-  @Nested
-  @DisplayName("When creating a user")
-  class WhenCreatingAUser {
+  private static final UUID USER_ID = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+  private static final Email EMAIL = Email.of("user@example.com");
+  private static final PasswordHash PASSWORD_HASH = PasswordHash.of("hashed-password");
 
-    @Test
-    @DisplayName("Should create a user with PENDING status and PENDING email verification status")
-    void shouldCreateUserWithPendingStatusAndPendingEmailVerificationStatus() {
-      // Given
-      var id = UserId.of("123e4567-e89b-12d3-a456-426614174000");
-      var email = Email.of("user@example.com");
-      var password = Password.of("password");
+  @Test
+  void shouldRegisterPendingUser() {
+    User user = User.register(USER_ID, EMAIL, PASSWORD_HASH);
 
-      // When
-      var user = User.create(id, email, password);
-
-      // Then
-      assertThat(user.status()).isEqualTo(UserStatus.PENDING);
-      assertThat(user.emailVerificationStatus()).isEqualTo(EmailVerificationStatus.PENDING);
-    }
-
-    @Test
-    @DisplayName("Should create a user with the given id, email and password")
-    void shouldCreateUserWithGivenIdEmailAndPassword() {
-      // Given
-      var id = UserId.of("123e4567-e89b-12d3-a456-426614174000");
-      var email = Email.of("user@example.com");
-      var password = Password.of("password");
-
-      // When
-      var user = User.create(id, email, password);
-
-      // Then
-      assertThat(user.id()).isEqualTo(id);
-      assertThat(user.email()).isEqualTo(email);
-      assertThat(user.password()).isEqualTo(password);
-    }
+    assertThat(user.id()).isEqualTo(USER_ID);
+    assertThat(user.email()).isEqualTo(EMAIL);
+    assertThat(user.passwordHash()).isEqualTo(PASSWORD_HASH);
+    assertThat(user.status()).isEqualTo(UserStatus.PENDING);
+    assertThat(user.emailVerificationStatus()).isEqualTo(EmailVerificationStatus.PENDING);
+    assertThat(user.lastLoginAt()).isNull();
   }
 
-  @Nested
-  @DisplayName("When reconstitute a user")
-  class WhenReconstituteAUser {
+  @Test
+  void shouldRestorePersistedState() {
+    Instant lastLoginAt = Instant.parse("2026-01-01T12:00:00Z");
 
-    @Test
-    @DisplayName("Should reconstitute a user with the given parameters")
-    void shouldReconstituteUserWithGivenParameters() {
-      // Given
-      var id = UserId.of("123e4567-e89b-12d3-a456-426614174000");
-      var email = Email.of("user@example.com");
-      var password = Password.of("password");
-      var state = UserAccountState.pending();
-      var userTimestamps = UserTimestamps.startingAt(Instant.now());
+    User user =
+        User.restore(
+            USER_ID,
+            EMAIL,
+            PASSWORD_HASH,
+            UserStatus.BLOCKED,
+            EmailVerificationStatus.VERIFIED,
+            lastLoginAt);
 
-      // When
-      var user = User.reconstitute(id, email, password, state, userTimestamps);
-
-      // Then
-      assertThat(user.id()).isEqualTo(id);
-      assertThat(user.email()).isEqualTo(email);
-      assertThat(user.password()).isEqualTo(password);
-      assertThat(user.status()).isEqualTo(UserStatus.PENDING);
-      assertThat(user.emailVerificationStatus()).isEqualTo(EmailVerificationStatus.PENDING);
-    }
+    assertThat(user.status()).isEqualTo(UserStatus.BLOCKED);
+    assertThat(user.emailVerificationStatus()).isEqualTo(EmailVerificationStatus.VERIFIED);
+    assertThat(user.lastLoginAt()).isEqualTo(lastLoginAt);
   }
 
-  @Nested
-  @DisplayName("When verify email")
-  class WhenVerifyEmail {
+  @Test
+  void shouldVerifyEmailAndActivateUser() {
+    User user = pendingUser();
 
-    @Test
-    @DisplayName("Should verify email is verified and user status is ACTIVE")
-    void shouldVerifyEmail() {
-      // Given
-      var id = UserId.of("123e4567-e89b-12d3-a456-426614174000");
-      var email = Email.of("user@example.com");
-      var password = Password.of("password");
+    user.verifyEmail();
 
-      // When
-      var user = User.create(id, email, password);
-      user.verifyEmail();
+    assertThat(user.emailVerificationStatus()).isEqualTo(EmailVerificationStatus.VERIFIED);
+    assertThat(user.status()).isEqualTo(UserStatus.ACTIVE);
+  }
 
-      // Then
-      assertThat(user.emailVerificationStatus()).isEqualTo(EmailVerificationStatus.VERIFIED);
-      assertThat(user.status()).isEqualTo(UserStatus.ACTIVE);
-    }
+  @Test
+  void shouldRejectRepeatedEmailVerification() {
+    User user = pendingUser();
+    user.verifyEmail();
 
-    @Test
-    @DisplayName("Should throw EmailAlreadyVerifiedException when email is already verified")
-    void shouldThrowEmailAlreadyVerifiedExceptionWhenEmailIsAlreadyVerified() {
-      // Given
-      var id = UserId.of("123e4567-e89b-12d3-a456-426614174000");
-      var email = Email.of("user@example.com");
-      var password = Password.of("password");
+    assertThatThrownBy(user::verifyEmail)
+        .isInstanceOf(EmailAlreadyVerifiedException.class)
+        .hasMessage("Email já foi verificado");
+  }
 
-      // When
-      var user = User.create(id, email, password);
-      user.verifyEmail();
+  @Test
+  void shouldRejectActivationBeforeEmailVerification() {
+    User user = pendingUser();
 
-      // Then
-      assertThatThrownBy(user::verifyEmail)
-          .isInstanceOf(EmailAlreadyVerifiedException.class)
-          .hasMessage("Email já foi verificado");
-    }
+    assertThatThrownBy(user::activate).isInstanceOf(EmailNotVerifiedException.class);
+  }
+
+  @Test
+  void shouldRegisterLoginAtInformedTime() {
+    User user = pendingUser();
+    user.verifyEmail();
+    Instant occurredAt = Instant.parse("2026-01-01T12:00:00Z");
+
+    user.registerLogin(occurredAt);
+
+    assertThat(user.lastLoginAt()).isEqualTo(occurredAt);
+  }
+
+  @Test
+  void shouldRejectLoginWhenUserIsBlocked() {
+    User user = pendingUser();
+    user.verifyEmail();
+    user.block();
+
+    assertThat(user.canLogin()).isFalse();
+    assertThatThrownBy(() -> user.registerLogin(Instant.now()))
+        .isInstanceOf(UserBlockedException.class);
+  }
+
+  @Test
+  void shouldChangePasswordHash() {
+    User user = pendingUser();
+    PasswordHash newPasswordHash = PasswordHash.of("new-hashed-password");
+
+    user.changePassword(newPasswordHash);
+
+    assertThat(user.passwordHash()).isEqualTo(newPasswordHash);
+  }
+
+  private static User pendingUser() {
+    return User.register(USER_ID, EMAIL, PASSWORD_HASH);
   }
 }
